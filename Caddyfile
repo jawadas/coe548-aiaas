@@ -1,0 +1,11 @@
+coe548.spaincentral.cloudapp.azure.com {
+	handle /v1/* {
+		reverse_proxy litellm:4000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		respond "AIaaS portal coming soon" 200
+	}
+}
