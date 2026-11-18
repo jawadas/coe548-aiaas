@@ -1,0 +1,6 @@
+# Development and test dependencies. Pinned into requirements-dev.txt with:
+#   uv pip compile --universal --python-version 3.13 requirements-dev.in -o requirements-dev.txt
+-c requirements.txt
+pytest
+pytest-asyncio
+ruff

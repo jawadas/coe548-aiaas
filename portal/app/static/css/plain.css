@@ -1,0 +1,15 @@
+/* Bare minimum so the unstyled portal is readable. The design pass replaces this file. */
+body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 0 auto; max-width: 60rem; padding: 0 1rem 3rem; }
+.skip-link { position: absolute; left: -999rem; }
+.skip-link:focus { left: 1rem; top: 1rem; }
+.site-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid #ccc; }
+.site-header nav ul, .actions { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; margin: 0; padding: 0; }
+.site-header .signout { margin-left: auto; }
+a[aria-current="page"] { font-weight: bold; }
+label { display: block; font-weight: bold; }
+input[type="text"], input[type="email"], input[type="password"] { box-sizing: border-box; font: inherit; max-width: 24rem; padding: 0.4rem; width: 100%; }
+button { font: inherit; padding: 0.4rem 0.9rem; }
+.flash, .notice, .form-error { border: 1px solid #999; padding: 0.5rem 0.75rem; }
+.flash-error, .form-error, .field-error { color: #a40000; }
+.field-error, .hint { display: block; font-size: 0.9em; }
+.error-status { font-size: 2.5rem; margin: 1rem 0 0; }

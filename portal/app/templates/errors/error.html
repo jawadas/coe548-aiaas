@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="error-page" data-status="{{ status_code }}" data-code="{{ code }}">
+  <p class="error-status">{{ status_code }}</p>
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  {% if retry_after %}
+  <p class="hint" data-retry-after="{{ retry_after }}">You can try again in {{ retry_after }} seconds.</p>
+  {% endif %}
+  <ul class="actions">
+    <li><a href="{{ '/overview' if user else '/' }}">Back to {{ 'your overview' if user else 'the home page' }}</a></li>
+    {% if not user %}
+    <li><a href="/login">Sign in</a></li>
+    {% endif %}
+  </ul>
+</section>
+{% endblock %}

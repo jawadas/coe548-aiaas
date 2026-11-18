@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Open-weight LLM API{% endblock %}
+{% block content %}
+<h1>AIaaS</h1>
+<p>
+  An OpenAI-compatible API for the open-weight model <code>{{ settings.model }}</code>:
+  create a key, point any OpenAI SDK at <code>{{ settings.public_url }}/v1</code> and start building.
+</p>
+<ul class="actions">
+  {% if user %}
+  <li><a href="/overview">Go to your overview</a></li>
+  {% else %}
+  {% if settings.signup_open %}
+  <li><a href="/signup">Create an account</a></li>
+  {% endif %}
+  <li><a href="/login">Sign in</a></li>
+  {% endif %}
+  <li><a href="/docs">Read the API docs</a></li>
+</ul>
+{% endblock %}
