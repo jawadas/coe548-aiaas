@@ -1,0 +1,8 @@
+{# Flash messages from the previous request, as alerts. #}
+{% for item in flash %}
+{% set tone = {'error': 'danger', 'danger': 'danger', 'success': 'success', 'warning': 'warning'}.get(item.kind, 'info') %}
+<div class="alert alert--{{ tone }}" role="status">
+  <svg class="icon alert__icon" aria-hidden="true"><use href="#i-{{ tone }}"/></svg>
+  <p class="alert__text">{{ item.message }}</p>
+</div>
+{% endfor %}

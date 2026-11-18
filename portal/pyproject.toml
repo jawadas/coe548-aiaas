@@ -1,0 +1,38 @@
+# Tooling configuration only. Dependencies live in requirements*.in / requirements*.txt.
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # import sorting
+    "UP",    # modern syntax
+    "B",     # likely bugs
+    "C4",    # comprehensions
+    "SIM",   # simplifications
+    "ASYNC", # async pitfalls
+    "S",     # security
+    "PT",    # pytest style
+    "RUF",   # ruff specific
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert freely and are full of made-up passwords and keys.
+"tests/*" = ["S101", "S105", "S106", "S107"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# One event loop for the whole run, so session-scoped fixtures (the database
+# pool) can be shared by every test.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "integration: talks to the real local LiteLLM gateway (skipped when it is not reachable)",
+]

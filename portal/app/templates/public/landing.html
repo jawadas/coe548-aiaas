@@ -1,0 +1,69 @@
+{% extends "public.html" %}
+{% block title %}Self-service API for {{ settings.model }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero__text">
+    {% include "_status_pill.html" %}
+    <h1 class="hero__title">Your own API key for <em>{{ settings.model }}</em>, in a minute.</h1>
+    <p class="hero__lead">An open-weight model on cloud GPUs behind an OpenAI-compatible API. Sign up, create a key, and call it from your own code, with per-key rate limits and usage you can see.</p>
+    <div class="hero__actions">
+      {% if user %}
+      <a class="btn btn--primary btn--lg" href="/overview">Open console<svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+      {% else %}
+      {% if settings.signup_open %}<a class="btn btn--primary btn--lg" href="/signup">Get started<svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>{% endif %}
+      <a class="btn btn--secondary btn--lg" href="/login">Sign in</a>
+      {% endif %}
+      <a class="btn btn--ghost btn--lg" href="/docs">Read the docs</a>
+    </div>
+  </div>
+  <div class="card hero__code">
+    <header class="card__header">
+      <div class="card__heading"><h2 class="card__title">One request away</h2></div>
+      <div class="tabs__list" role="tablist" aria-label="Example language">
+        <button class="tabs__tab" type="button" role="tab" id="hero-tab-curl" aria-controls="hero-panel-curl" aria-selected="true">curl</button>
+        <button class="tabs__tab" type="button" role="tab" id="hero-tab-python" aria-controls="hero-panel-python" aria-selected="false" tabindex="-1">Python</button>
+      </div>
+    </header>
+    <div class="card__body">
+      {% set base_url = settings.public_url ~ '/v1' %}
+      {% set qs = 'hero' %}
+      {% include "_quickstart.html" %}
+    </div>
+  </div>
+</section>
+
+<section class="features" aria-label="What you get">
+  <article class="card feature"><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-terminal"/></svg></span><h2 class="feature__title">OpenAI-compatible</h2><p class="feature__text">Point any OpenAI SDK at the base URL. No new client to learn.</p></article>
+  <article class="card feature"><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-key"/></svg></span><h2 class="feature__title">Self-service keys</h2><p class="feature__text">Create and revoke API keys yourself. No one has to approve anything.</p></article>
+  <article class="card feature"><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-gauge"/></svg></span><h2 class="feature__title">Per-key rate limits</h2><p class="feature__text">Each key and each account has its own requests and tokens per minute.</p></article>
+  <article class="card feature"><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-usage"/></svg></span><h2 class="feature__title">Usage metering</h2><p class="feature__text">See requests and tokens per day and per key, seconds after each call.</p></article>
+  <article class="card feature"><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-chat"/></svg></span><h2 class="feature__title">Chat playground</h2><p class="feature__text">Talk to the model in the browser and watch it reason, no code needed.</p></article>
+  <article class="card feature"><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-cpu"/></svg></span><h2 class="feature__title">On-demand GPU</h2><p class="feature__text">The GPU runs only when needed. The portal and your keys stay up meanwhile.</p></article>
+</section>
+
+<section class="card arch" aria-labelledby="arch-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="arch-title">How it fits together</h2>
+      <p class="card__subtitle">An always-on CPU VM runs the portal, the gateway and the database. The GPU tier starts and stops without taking the service offline.</p>
+    </div>
+  </header>
+  <div class="card__body">
+    <ol class="arch__flow">
+      <li class="arch__node"><span class="arch__name">Your code</span><span class="arch__note">curl, Python, any OpenAI SDK</span></li>
+      <li class="arch__node"><span class="arch__name">Caddy</span><span class="arch__note">HTTPS and routing</span></li>
+      <li class="arch__node arch__node--pair">
+        <span class="arch__half"><span class="arch__name">Portal</span><span class="arch__note">accounts, keys, usage</span></span>
+        <span class="arch__half"><span class="arch__name">LiteLLM gateway</span><span class="arch__note">auth, rate limits, metering</span></span>
+      </li>
+      <li class="arch__node arch__node--gpu"><span class="arch__name">vLLM on a GPU pod</span><span class="arch__note">{{ settings.model }}, on demand</span></li>
+    </ol>
+    <p class="arch__foot">PostgreSQL stores accounts, keys and usage. Everything on the VM runs in Docker Compose.</p>
+  </div>
+</section>
+
+<section class="team">
+  <p class="team__title">Built for COE 548 Cloud-Based Systems by Team 5</p>
+  <p class="team__roles">Ali: infrastructure and model serving · Ammar: API gateway and backend · Omar: portal and documentation</p>
+</section>
+{% endblock %}

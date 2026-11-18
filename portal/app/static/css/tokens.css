@@ -1,0 +1,490 @@
+/* ==========================================================================
+   AIaaS · Aurora design tokens
+   --------------------------------------------------------------------------
+   Everything that differs between themes lives in this file. app.css reads
+   tokens only and contains no theme selectors.
+
+   Theme switching
+     :root                                   light values (default)
+     :root[data-theme="dark"]                dark values, chosen explicitly
+     @media (prefers-color-scheme: dark)
+       :root:not([data-theme="light"])       dark values, chosen by the system
+   The two dark blocks are identical on purpose. Edit them together.
+
+   Fonts (self-hosted variable woff2, Fontsource subsets)
+     Outfit            SIL Open Font License 1.1   headings and figures   wght 100-900
+     Inter             SIL Open Font License 1.1   interface and body     wght 100-900
+     JetBrains Mono    SIL Open Font License 1.1   code and API keys      wght 100-800
+     Noto Sans Arabic  SIL Open Font License 1.1   Arabic script          wght 100-900
+   ========================================================================== */
+
+@font-face {
+  font-family: "Outfit";
+  src: url("../fonts/outfit-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans Arabic";
+  src: url("../fonts/noto-sans-arabic-arabic-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+
+/* --------------------------------------------------------------------------
+   Theme-independent tokens
+   -------------------------------------------------------------------------- */
+:root {
+  /* Type families. The Arabic face sits second so mixed text picks it up
+     glyph by glyph; system Arabic faces follow as fallbacks. */
+  --font-sans: "Inter", "Noto Sans Arabic", system-ui, -apple-system, "Segoe UI",
+    "Geeza Pro", "Noto Naskh Arabic", Tahoma, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Outfit", "Noto Sans Arabic", "Avenir Next", "Century Gothic",
+    "Segoe UI", "Geeza Pro", "Noto Naskh Arabic", Tahoma, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo,
+    Consolas, "Liberation Mono", monospace;
+
+  /* Type scale */
+  --text-xs: 0.6875rem;   /* 11px  axis ticks, overlines */
+  --text-sm: 0.75rem;     /* 12px  captions, badges */
+  --text-md: 0.8125rem;   /* 13px  secondary interface text */
+  --text-base: 0.875rem;  /* 14px  interface default */
+  --text-lg: 0.9375rem;   /* 15px  reading text (chat, docs) */
+  --text-xl: 1.0625rem;   /* 17px  card titles */
+  --text-2xl: 1.25rem;    /* 20px  section titles */
+  --text-3xl: 1.5rem;     /* 24px  dialog and state titles */
+  --text-4xl: 1.875rem;   /* 30px  page greeting, stat figures */
+  --text-5xl: 2.375rem;   /* 38px  hero titles */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-none: 1;
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  --tracking-tight: -0.022em;
+  --tracking-snug: -0.011em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-caps: 0.08em;
+
+  /* Spacing scale (4px base) */
+  --space-0: 0;
+  --space-05: 0.125rem;  /* 2px */
+  --space-1: 0.25rem;    /* 4px */
+  --space-15: 0.375rem;  /* 6px */
+  --space-2: 0.5rem;     /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;       /* 16px */
+  --space-5: 1.25rem;    /* 20px */
+  --space-6: 1.5rem;     /* 24px */
+  --space-8: 2rem;       /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+
+  /* Radii: round, but stepped so nested shapes stay concentric */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Sizes */
+  --control-sm: 2rem;       /* 32px */
+  --control-md: 2.5rem;     /* 40px */
+  --control-lg: 2.75rem;    /* 44px */
+  --sidebar-width: 16.5rem; /* 264px */
+  --topbar-height: 3.5rem;  /* 56px */
+  --shell-gap: 0.75rem;     /* 12px frame around every floating panel */
+  --content-max: 73.75rem;  /* 1180px */
+  --thread-max: 47.5rem;    /* 760px readable chat column */
+  --chat-list-width: 17.5rem;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 420ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Stacking */
+  --z-sticky: 20;
+  --z-scrim: 40;
+  --z-drawer: 50;
+  --z-popover: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+
+  /* Glass */
+  --glass-filter: blur(22px) saturate(165%);
+  --glass-filter-strong: blur(30px) saturate(180%);
+
+  /* The accent gradient is assembled from three themed stops, so CSS
+     backgrounds and SVG gradients (the logo) always agree. */
+  --accent-gradient: linear-gradient(118deg, var(--accent-from) 0%, var(--accent-via) 52%, var(--accent-to) 100%);
+}
+
+/* Phones get a tighter frame around the floating panels. */
+@media (max-width: 40em) {
+  :root {
+    --shell-gap: 0.5rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Light theme (default): bright, airy, softly tinted
+   -------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --theme-dark: 0; /* 0 or 1, for components that cross-fade between themes */
+
+  /* Atmosphere: the page background behind the glass */
+  --color-bg: #f1f3fd;
+  --atmo-base-start: #eceaff;
+  --atmo-base-mid: #f3f6ff;
+  --atmo-base-end: #e6f8f5;
+  --atmo-glow-indigo: rgba(124, 131, 250, 0.36);
+  --atmo-glow-teal: rgba(45, 212, 191, 0.30);
+  --atmo-glow-blue: rgba(56, 170, 248, 0.20);
+
+  /* Glass surfaces (blurred) */
+  --glass-fill: rgba(255, 255, 255, 0.66);
+  --glass-fill-strong: rgba(255, 255, 255, 0.90);
+  --glass-fill-raised: rgba(255, 255, 255, 0.86); /* a surface lifted off a glass panel */
+  --glass-border: rgba(255, 255, 255, 0.92);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 0 0 1px rgba(30, 36, 92, 0.055),
+    0 1px 2px rgba(30, 36, 92, 0.04),
+    0 18px 40px -24px rgba(44, 52, 132, 0.28);
+  --overlay-shadow: 0 0 0 1px rgba(30, 36, 92, 0.07),
+    0 6px 16px -6px rgba(30, 36, 92, 0.12),
+    0 32px 64px -24px rgba(34, 40, 110, 0.38);
+  --scrim: rgba(24, 28, 72, 0.34);
+
+  /* Fills for things that sit inside glass (not blurred) */
+  --fill-subtle: rgba(52, 60, 140, 0.04);
+  --fill-muted: rgba(52, 60, 140, 0.07);
+  --fill-strong: rgba(52, 60, 140, 0.12);
+  --fill-inset: rgba(255, 255, 255, 0.72);
+  --fill-raised: rgba(255, 255, 255, 0.96);
+  --raised-shadow: 0 1px 2px rgba(30, 36, 92, 0.10), 0 0 0 1px rgba(30, 36, 92, 0.06);
+
+  /* Lines */
+  --border-subtle: rgba(30, 36, 92, 0.07);
+  --border: rgba(30, 36, 92, 0.12);
+  --border-strong: rgba(30, 36, 92, 0.20);
+  --border-control: rgba(30, 36, 92, 0.50); /* 3:1 against glass */
+
+  /* Text */
+  --text: #14163a;
+  --text-secondary: #43486e;
+  --text-muted: #565c84;
+  --text-disabled: #9499b8;
+  --text-link: #4338ca;
+
+  /* Accent */
+  --accent: #4b4fe3;
+  --accent-strong: #3730b8;
+  --accent-teal: #0b7a80;
+  --accent-soft: rgba(75, 79, 227, 0.09);
+  --accent-soft-border: rgba(75, 79, 227, 0.24);
+  --accent-from: #4f46e5;
+  --accent-via: #2460e0;
+  --accent-to: #0b7a80;
+  --accent-ink: #ffffff;
+  --accent-edge: rgba(255, 255, 255, 0.22);
+  --accent-glow: 0 10px 22px -10px rgba(63, 78, 228, 0.65), 0 2px 5px -1px rgba(30, 36, 92, 0.25);
+  --accent-hover: brightness(0.9) saturate(1.12);
+  --accent-halo: rgba(63, 78, 228, 0.32); /* soft light around accent marks */
+  --focus: #4338ca;
+
+  /* Status */
+  --success: #116932;
+  --success-solid: #16a34a;
+  --success-soft: rgba(22, 163, 74, 0.11);
+  --success-border: rgba(22, 163, 74, 0.30);
+  --warning: #85470a;
+  --warning-solid: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+  --warning-border: rgba(217, 119, 6, 0.34);
+  --danger: #ad1238;
+  --danger-solid: #c81e4a;
+  --danger-ink: #ffffff;
+  --danger-soft: rgba(225, 29, 72, 0.08);
+  --danger-border: rgba(225, 29, 72, 0.30);
+  --info: #075985;
+  --info-solid: #0284c7;
+  --info-soft: rgba(2, 132, 199, 0.09);
+  --info-border: rgba(2, 132, 199, 0.28);
+  --offline: #4b5183;
+  --offline-soft: rgba(75, 81, 131, 0.10);
+
+  /* Data visualisation (validated: lightness band, CVD separation, 3:1 on surface) */
+  --chart-prompt: #5a5eea;
+  --chart-completion: #0e9a8d;
+  --chart-grid: rgba(30, 36, 92, 0.09);
+  --chart-baseline: rgba(30, 36, 92, 0.26);
+  --chart-band: rgba(75, 79, 227, 0.06);
+  --chart-glow: rgba(14, 154, 141, 0.45);
+
+  /* Code */
+  --code-bg: rgba(255, 255, 255, 0.74);
+  --code-header: rgba(52, 60, 140, 0.05);
+  --code-text: #1b1e45;
+  --code-comment: #5f6590;
+  --code-keyword: #5b3fd6;
+  --code-string: #0a6b60;
+  --code-number: #a2460a;
+  --code-title: #1957c2;
+  --code-builtin: #0a6880;
+  --code-attr: #9a2a7c;
+  --code-params: #3a4070;
+
+  /* Chat */
+  --bubble-fill: rgba(75, 79, 227, 0.09);
+  --bubble-border: rgba(75, 79, 227, 0.20);
+
+  /* Skeleton */
+  --skeleton: rgba(52, 60, 140, 0.09);
+  --skeleton-shine: rgba(255, 255, 255, 0.85);
+}
+
+/* --------------------------------------------------------------------------
+   Dark theme (hero): deep indigo-to-teal atmosphere behind glass
+   -------------------------------------------------------------------------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-dark: 1;
+
+  --color-bg: #070a1c;
+  --atmo-base-start: #120e3c;
+  --atmo-base-mid: #080b21;
+  --atmo-base-end: #051a20;
+  --atmo-glow-indigo: rgba(94, 84, 255, 0.52);
+  --atmo-glow-teal: rgba(14, 180, 160, 0.34);
+  --atmo-glow-blue: rgba(40, 116, 240, 0.24);
+
+  --glass-fill: rgba(14, 17, 42, 0.56);
+  --glass-fill-strong: rgba(17, 20, 49, 0.86);
+  --glass-fill-raised: rgba(40, 45, 98, 0.58);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 0 0 1px rgba(2, 3, 12, 0.35),
+    0 20px 44px -26px rgba(0, 0, 0, 0.75);
+  --overlay-shadow: 0 0 0 1px rgba(2, 3, 12, 0.5),
+    0 10px 24px -8px rgba(0, 0, 0, 0.5),
+    0 36px 72px -24px rgba(0, 0, 0, 0.8);
+  --scrim: rgba(3, 4, 14, 0.64);
+
+  --fill-subtle: rgba(255, 255, 255, 0.035);
+  --fill-muted: rgba(255, 255, 255, 0.065);
+  --fill-strong: rgba(255, 255, 255, 0.11);
+  --fill-inset: rgba(3, 5, 18, 0.42);
+  --fill-raised: rgba(255, 255, 255, 0.13);
+  --raised-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.11);
+  --border-strong: rgba(255, 255, 255, 0.19);
+  --border-control: rgba(255, 255, 255, 0.38); /* 3:1 against glass */
+
+  --text: #f2f4ff;
+  --text-secondary: #c3c8e7;
+  --text-muted: #9da5cf;
+  --text-disabled: #6a7199;
+  --text-link: #a9b6ff;
+
+  --accent: #97a5ff;
+  --accent-strong: #bcc5ff;
+  --accent-teal: #4fe3cc;
+  --accent-soft: rgba(151, 165, 255, 0.13);
+  --accent-soft-border: rgba(151, 165, 255, 0.30);
+  --accent-from: #9ea8ff;
+  --accent-via: #72c2fb;
+  --accent-to: #50e3cc;
+  --accent-ink: #070b24;
+  --accent-edge: rgba(255, 255, 255, 0.45);
+  --accent-glow: 0 10px 28px -10px rgba(104, 190, 250, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --accent-hover: brightness(1.08) saturate(1.05);
+  --accent-halo: rgba(104, 190, 250, 0.5);
+  --focus: #a9b6ff;
+
+  --success: #6ee7a8;
+  --success-solid: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.13);
+  --success-border: rgba(52, 211, 153, 0.32);
+  --warning: #fcd34d;
+  --warning-solid: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.32);
+  --danger: #fda4af;
+  --danger-solid: #fb7185;
+  --danger-ink: #2a0611;
+  --danger-soft: rgba(251, 113, 133, 0.13);
+  --danger-border: rgba(251, 113, 133, 0.36);
+  --info: #8bd3ff;
+  --info-solid: #38bdf8;
+  --info-soft: rgba(56, 189, 248, 0.12);
+  --info-border: rgba(56, 189, 248, 0.32);
+  --offline: #b9bfe6;
+  --offline-soft: rgba(185, 191, 230, 0.10);
+
+  --chart-prompt: #7b80f8;
+  --chart-completion: #12ac9c;
+  --chart-grid: rgba(255, 255, 255, 0.07);
+  --chart-baseline: rgba(255, 255, 255, 0.24);
+  --chart-band: rgba(151, 165, 255, 0.08);
+  --chart-glow: rgba(26, 214, 192, 0.6);
+
+  --code-bg: rgba(3, 5, 18, 0.5);
+  --code-header: rgba(255, 255, 255, 0.04);
+  --code-text: #e6e9ff;
+  --code-comment: #8f98c6;
+  --code-keyword: #b5a8ff;
+  --code-string: #7ee8c9;
+  --code-number: #ffc48a;
+  --code-title: #82c9ff;
+  --code-builtin: #5fdde8;
+  --code-attr: #f3a8e4;
+  --code-params: #cfd4f2;
+
+  --bubble-fill: rgba(124, 131, 250, 0.20);
+  --bubble-border: rgba(151, 165, 255, 0.28);
+
+  --skeleton: rgba(255, 255, 255, 0.075);
+  --skeleton-shine: rgba(255, 255, 255, 0.13);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --theme-dark: 1;
+
+    --color-bg: #070a1c;
+    --atmo-base-start: #120e3c;
+    --atmo-base-mid: #080b21;
+    --atmo-base-end: #051a20;
+    --atmo-glow-indigo: rgba(94, 84, 255, 0.52);
+    --atmo-glow-teal: rgba(14, 180, 160, 0.34);
+    --atmo-glow-blue: rgba(40, 116, 240, 0.24);
+
+    --glass-fill: rgba(14, 17, 42, 0.56);
+    --glass-fill-strong: rgba(17, 20, 49, 0.86);
+    --glass-fill-raised: rgba(40, 45, 98, 0.58);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --glass-highlight: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 0 0 1px rgba(2, 3, 12, 0.35),
+      0 20px 44px -26px rgba(0, 0, 0, 0.75);
+    --overlay-shadow: 0 0 0 1px rgba(2, 3, 12, 0.5),
+      0 10px 24px -8px rgba(0, 0, 0, 0.5),
+      0 36px 72px -24px rgba(0, 0, 0, 0.8);
+    --scrim: rgba(3, 4, 14, 0.64);
+
+    --fill-subtle: rgba(255, 255, 255, 0.035);
+    --fill-muted: rgba(255, 255, 255, 0.065);
+    --fill-strong: rgba(255, 255, 255, 0.11);
+    --fill-inset: rgba(3, 5, 18, 0.42);
+    --fill-raised: rgba(255, 255, 255, 0.13);
+    --raised-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border: rgba(255, 255, 255, 0.11);
+    --border-strong: rgba(255, 255, 255, 0.19);
+    --border-control: rgba(255, 255, 255, 0.38); /* 3:1 against glass */
+
+    --text: #f2f4ff;
+    --text-secondary: #c3c8e7;
+    --text-muted: #9da5cf;
+    --text-disabled: #6a7199;
+    --text-link: #a9b6ff;
+
+    --accent: #97a5ff;
+    --accent-strong: #bcc5ff;
+    --accent-teal: #4fe3cc;
+    --accent-soft: rgba(151, 165, 255, 0.13);
+    --accent-soft-border: rgba(151, 165, 255, 0.30);
+    --accent-from: #9ea8ff;
+    --accent-via: #72c2fb;
+    --accent-to: #50e3cc;
+    --accent-ink: #070b24;
+    --accent-edge: rgba(255, 255, 255, 0.45);
+    --accent-glow: 0 10px 28px -10px rgba(104, 190, 250, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --accent-hover: brightness(1.08) saturate(1.05);
+    --accent-halo: rgba(104, 190, 250, 0.5);
+    --focus: #a9b6ff;
+
+    --success: #6ee7a8;
+    --success-solid: #34d399;
+    --success-soft: rgba(52, 211, 153, 0.13);
+    --success-border: rgba(52, 211, 153, 0.32);
+    --warning: #fcd34d;
+    --warning-solid: #fbbf24;
+    --warning-soft: rgba(251, 191, 36, 0.12);
+    --warning-border: rgba(251, 191, 36, 0.32);
+    --danger: #fda4af;
+    --danger-solid: #fb7185;
+    --danger-ink: #2a0611;
+    --danger-soft: rgba(251, 113, 133, 0.13);
+    --danger-border: rgba(251, 113, 133, 0.36);
+    --info: #8bd3ff;
+    --info-solid: #38bdf8;
+    --info-soft: rgba(56, 189, 248, 0.12);
+    --info-border: rgba(56, 189, 248, 0.32);
+    --offline: #b9bfe6;
+    --offline-soft: rgba(185, 191, 230, 0.10);
+
+    --chart-prompt: #7b80f8;
+    --chart-completion: #12ac9c;
+    --chart-grid: rgba(255, 255, 255, 0.07);
+    --chart-baseline: rgba(255, 255, 255, 0.24);
+    --chart-band: rgba(151, 165, 255, 0.08);
+    --chart-glow: rgba(26, 214, 192, 0.6);
+
+    --code-bg: rgba(3, 5, 18, 0.5);
+    --code-header: rgba(255, 255, 255, 0.04);
+    --code-text: #e6e9ff;
+    --code-comment: #8f98c6;
+    --code-keyword: #b5a8ff;
+    --code-string: #7ee8c9;
+    --code-number: #ffc48a;
+    --code-title: #82c9ff;
+    --code-builtin: #5fdde8;
+    --code-attr: #f3a8e4;
+    --code-params: #cfd4f2;
+
+    --bubble-fill: rgba(124, 131, 250, 0.20);
+    --bubble-border: rgba(151, 165, 255, 0.28);
+
+    --skeleton: rgba(255, 255, 255, 0.075);
+    --skeleton-shine: rgba(255, 255, 255, 0.13);
+  }
+}

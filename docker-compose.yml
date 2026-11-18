@@ -42,6 +42,85 @@ services:
     depends_on:
       - litellm
         
+  # ---------------------------------------------------------------------------
+  # User portal: sign-up, API keys, usage, playground, docs and the admin area.
+  # On the VM, deploy with scripts/deploy.sh. It backs up the database first
+  # and makes the running Caddy load the current Caddyfile.
+  # ---------------------------------------------------------------------------
+
+  # One-shot job: creates the "portal" role and database in the shared
+  # Postgres, because init scripts never run on a volume that already holds
+  # data. Idempotent, runs on every "up"; "Exited (0)" is its normal state.
+  portal-db-init:
+    image: postgres:16-alpine
+    restart: "no"
+    entrypoint: ["sh", "/usr/local/bin/portal-db-init.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: aiaas
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+      PORTAL_DB_PASSWORD: "${PORTAL_DB_PASSWORD:?add it to .env (scripts/deploy.sh generates it)}"
+    volumes:
+      - ./portal/db-init.sh:/usr/local/bin/portal-db-init.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Reached only through Caddy: no published ports. It gets the credentials of
+  # the "portal" database, never the Postgres superuser password. It does not
+  # depend on litellm, and caddy does not depend on it, so /v1 keeps working
+  # while the portal is down, building or broken.
+  portal:
+    build: ./portal
+    restart: unless-stopped
+    environment:
+      PORTAL_ENV: production
+      PORTAL_PUBLIC_URL: ${PORTAL_PUBLIC_URL:-https://coe548.spaincentral.cloudapp.azure.com}
+      PORTAL_DATABASE_URL: postgresql://portal:${PORTAL_DB_PASSWORD}@postgres:5432/portal
+      PORTAL_SECRET_KEY: "${PORTAL_SECRET_KEY:?add it to .env (scripts/deploy.sh generates it)}"
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      PORTAL_MODEL: ${PORTAL_MODEL:-gpt-oss-20b}
+      # Who may sign up, and who is an admin.
+      PORTAL_INVITE_CODE: ${PORTAL_INVITE_CODE:-}
+      PORTAL_OPEN_SIGNUP: ${PORTAL_OPEN_SIGNUP:-false}
+      PORTAL_ADMIN_EMAILS: ${PORTAL_ADMIN_EMAILS:-}
+      PORTAL_FIRST_USER_ADMIN: ${PORTAL_FIRST_USER_ADMIN:-true}
+      # Sessions and sign-in.
+      PORTAL_COOKIE_SECURE: ${PORTAL_COOKIE_SECURE:-true}
+      PORTAL_SESSION_HOURS: ${PORTAL_SESSION_HOURS:-168}
+      PORTAL_AUTH_RATE_LIMIT: ${PORTAL_AUTH_RATE_LIMIT:-true}
+      # Limits for new users and keys (requests and tokens per minute).
+      PORTAL_KEY_RPM_LIMIT: ${PORTAL_KEY_RPM_LIMIT:-10}
+      PORTAL_KEY_TPM_LIMIT: ${PORTAL_KEY_TPM_LIMIT:-30000}
+      PORTAL_USER_RPM_LIMIT: ${PORTAL_USER_RPM_LIMIT:-30}
+      PORTAL_USER_TPM_LIMIT: ${PORTAL_USER_TPM_LIMIT:-60000}
+      PORTAL_PLAYGROUND_RPM_LIMIT: ${PORTAL_PLAYGROUND_RPM_LIMIT:-10}
+      PORTAL_MAX_KEYS_PER_USER: ${PORTAL_MAX_KEYS_PER_USER:-5}
+    depends_on:
+      portal-db-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    # The VM has 2 vCPU and 7.7 GB shared with the gateway and the database.
+    # However busy the portal gets, it cannot take more than this.
+    mem_limit: 1g
+    cpus: 1.5
+    # The app writes nothing to disk and needs no privileges.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   pg_data:
   caddy_data:

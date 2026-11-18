@@ -1,0 +1,140 @@
+{% extends "app.html" %}
+{% block title %}Playground{% endblock %}
+{% block page_title %}Playground{% endblock %}
+{% block shell_class %} shell--app{% endblock %}
+{% block main %}
+<main class="chat" id="main" data-chat data-model="{{ settings.model }}">
+
+  <aside class="chat-list" id="chat-list" aria-label="Conversations">
+    <div class="chat-list__header">
+      <button class="btn btn--secondary btn--block" type="button" data-new-chat><svg class="icon" aria-hidden="true"><use href="#i-compose"/></svg>New chat</button>
+    </div>
+    <nav class="chat-list__scroll" aria-label="Chat history" data-chat-list hidden>
+      <h2 class="chat-list__label">Recent</h2>
+      <ul class="chat-list__group" data-chat-items></ul>
+    </nav>
+    <div class="empty empty--compact" data-chat-list-empty>
+      <span class="empty__icon" aria-hidden="true"><svg class="icon"><use href="#i-chat"/></svg></span>
+      <h2 class="empty__title">No chats yet</h2>
+      <p class="empty__text">Your conversations are kept in this browser so you can pick them up later.</p>
+    </div>
+  </aside>
+
+  <section class="chat-main" aria-label="Conversation">
+    <header class="chat-header">
+      <button class="btn btn--ghost btn--icon btn--sm" type="button" data-drawer-open="list" aria-controls="chat-list" aria-expanded="false" aria-label="Show conversations"><svg class="icon" aria-hidden="true"><use href="#i-panel"/></svg></button>
+      <h2 class="chat-header__title" dir="auto" data-chat-title>New chat</h2>
+      <button class="btn btn--ghost btn--icon btn--sm" type="button" data-new-chat aria-label="New chat"><svg class="icon" aria-hidden="true"><use href="#i-compose"/></svg></button>
+    </header>
+
+    <div class="chat-thread" role="log" aria-label="Messages" tabindex="0" data-thread hidden>
+      <div class="chat-thread__inner" data-thread-inner></div>
+    </div>
+
+    <div class="chat-state" data-offline hidden>
+      <div class="chat-state__inner">
+        <div class="gpu-art" aria-hidden="true">
+          <svg class="gpu-art__svg" viewBox="0 0 220 152" focusable="false">
+            <ellipse class="gpu-art__shadow" cx="110" cy="141" rx="42" ry="4"/>
+            <path class="gpu-art__moon" d="M40 10.5a9 9 0 0 0 13.5 13.5 13.5 13.5 0 1 1-13.5-13.5z"/>
+            <circle class="gpu-art__star" cx="18" cy="64" r="1.6"/><circle class="gpu-art__star" cx="68" cy="20" r="1.2"/>
+            <circle class="gpu-art__star" cx="34" cy="112" r="1.3"/><circle class="gpu-art__star" cx="190" cy="120" r="1.5"/>
+            <path d="M198 76v8"/><path d="M194 80h8"/>
+            <path d="M92 44V33"/><path d="M110 44V33"/><path d="M128 44V33"/>
+            <path d="M92 135v-11"/><path d="M110 135v-11"/><path d="M128 135v-11"/>
+            <path d="M70 66H59"/><path d="M70 84H59"/><path d="M70 102H59"/>
+            <path d="M161 66h-11"/><path d="M161 84h-11"/><path d="M161 102h-11"/>
+            <rect class="gpu-art__body" x="70" y="44" width="80" height="80" rx="18"/>
+            <rect class="gpu-art__die" x="86" y="60" width="48" height="48" rx="11"/>
+            <path class="gpu-art__eyes" d="M96 83q4 4.5 8 0"/><path class="gpu-art__eyes" d="M116 83q4 4.5 8 0"/>
+            <path class="gpu-art__z" d="M165 43h7l-7 8h7"/>
+            <path class="gpu-art__z gpu-art__z--far" d="M178 24h9l-9 10h9"/>
+            <path class="gpu-art__z gpu-art__z--farther" d="M192 2h11l-11 12.5h11"/>
+          </svg>
+        </div>
+        <h2 class="chat-state__title">The GPU is asleep</h2>
+        <p class="chat-state__text">The model runs on an on-demand GPU that is shut down between sessions to save cost. Your keys, usage and chats are all still here.</p>
+        <div class="chat-state__actions">
+          <button class="btn btn--primary btn--lg" type="button" data-check-again aria-describedby="last-checked"><span class="btn__spinner" aria-hidden="true"></span><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>Check again</button>
+          <p class="chat-state__note" id="last-checked" data-last-checked>Checked just now</p>
+        </div>
+        <div class="chat-state__tiles">
+          <a class="tile" href="/docs"><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-docs"/></svg></span><span class="tile__body"><span class="tile__title">Read the docs</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          <a class="tile" href="/keys"><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-key"/></svg></span><span class="tile__body"><span class="tile__title">Manage API keys</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-state" data-empty>
+      <div class="chat-state__inner chat-state__inner--wide">
+        <div class="hero-mark" aria-hidden="true"><svg class="hero-mark__logo"><use href="#logo"/></svg></div>
+        <h2 class="chat-state__title chat-state__title--hero">What can I help you <em>build?</em></h2>
+        <p class="chat-state__text">Start from a suggestion or write your own message below.</p>
+        <div class="chat-state__tiles">
+          <button class="tile" type="button" data-suggestion="Explain how API rate limits work, in a few short paragraphs."><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-gauge"/></svg></span><span class="tile__body"><span class="tile__title">Explain how rate limits work</span><span class="tile__text">Requests per minute and 429s</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+          <button class="tile" type="button" data-suggestion="Write a Python function that retries an HTTP request with exponential backoff, and explain when to use it."><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-terminal"/></svg></span><span class="tile__body"><span class="tile__title">Write a retry helper in Python</span><span class="tile__text">Exponential backoff with jitter</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+          <button class="tile" type="button" data-suggestion="Summarise the idea of containers versus virtual machines in five bullet points."><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-text"/></svg></span><span class="tile__body"><span class="tile__title">Summarise a cloud concept</span><span class="tile__text">Containers versus virtual machines</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+          <button class="tile" type="button" data-suggestion="ترجم إلى الإنجليزية: الحوسبة السحابية تتيح الوصول إلى الموارد عند الطلب."><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-languages"/></svg></span><span class="tile__body"><span class="tile__title">Translate Arabic ↔ English</span><span class="tile__text">Technical writing, either direction</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <form class="chat-composer" action="#" data-composer>
+      <div class="chat-composer__inner">
+        <div class="alert alert--warning" role="status" data-chat-notice hidden>
+          <svg class="icon alert__icon" aria-hidden="true"><use href="#i-warning"/></svg>
+          <p class="alert__text" data-chat-notice-text></p>
+        </div>
+        <div class="chat-composer__box">
+          <label class="sr-only" for="composer-input">Message {{ settings.model }}</label>
+          <textarea class="chat-composer__input" id="composer-input" rows="1" placeholder="Message {{ settings.model }}…" dir="auto" maxlength="16000" data-autogrow data-input></textarea>
+          <div class="chat-composer__toolbar">
+            <span class="chip"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-cpu"/></svg>{{ settings.model }}</span>
+            <div class="chat-composer__actions">
+              <button class="btn btn--ghost btn--icon btn--sm" type="button" data-popover-toggle aria-controls="chat-settings" aria-expanded="false" aria-label="Model settings"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg></button>
+              <button class="btn btn--primary btn--icon chat-composer__send" type="button" data-stop aria-label="Stop generating" hidden><svg class="icon icon--solid" aria-hidden="true"><use href="#i-stop"/></svg></button>
+              <button class="btn btn--primary btn--icon chat-composer__send" type="submit" data-send aria-label="Send message"><svg class="icon" aria-hidden="true"><use href="#i-arrow-up"/></svg></button>
+            </div>
+          </div>
+          <div class="popover popover--top-end" id="chat-settings" role="dialog" aria-labelledby="chat-settings-title" data-popover hidden>
+            <div class="popover__header">
+              <h2 class="popover__title" id="chat-settings-title">Model settings</h2>
+              <button class="btn btn--ghost btn--sm" type="button" data-settings-reset>Reset</button>
+            </div>
+            <div class="field">
+              <label class="field__label" for="set-temperature">Temperature <output class="field__value" id="set-temperature-value" for="set-temperature">0.7</output></label>
+              <input class="range" id="set-temperature" type="range" min="0" max="2" step="0.1" value="0.7" data-range="set-temperature-value">
+              <div class="range__scale" aria-hidden="true"><span>0 · precise</span><span>creative · 2</span></div>
+            </div>
+            <div class="popover__row">
+              <div class="field">
+                <label class="field__label" for="set-max-tokens">Max tokens</label>
+                <input class="input input--sm" id="set-max-tokens" type="number" min="16" max="8192" step="1" value="2048" inputmode="numeric">
+              </div>
+              <div class="field">
+                <span class="field__label" id="set-effort-label">Reasoning effort</span>
+                <div class="segmented" role="radiogroup" aria-labelledby="set-effort-label">
+                  <input class="segmented__input" type="radio" name="set-effort" id="set-effort-low" value="low"><label class="segmented__label" for="set-effort-low">Low</label>
+                  <input class="segmented__input" type="radio" name="set-effort" id="set-effort-medium" value="medium" checked><label class="segmented__label" for="set-effort-medium">Medium</label>
+                  <input class="segmented__input" type="radio" name="set-effort" id="set-effort-high" value="high"><label class="segmented__label" for="set-effort-high">High</label>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="set-system">System prompt</label>
+              <textarea class="input" id="set-system" rows="3" maxlength="4000" dir="auto" placeholder="Optional. For example: answer briefly."></textarea>
+            </div>
+          </div>
+        </div>
+        <p class="chat-composer__hint"><kbd class="kbd">Enter</kbd> to send · <kbd class="kbd">Shift</kbd>+<kbd class="kbd">Enter</kbd> for a new line</p>
+      </div>
+    </form>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}
+<script src="{{ static_url('vendor/marked.min.js') }}" defer></script>
+<script src="{{ static_url('vendor/purify.min.js') }}" defer></script>
+<script src="{{ static_url('vendor/highlight.min.js') }}" defer></script>
+<script src="{{ static_url('js/chat.js') }}" defer></script>
+{% endblock %}

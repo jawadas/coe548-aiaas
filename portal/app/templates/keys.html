@@ -1,0 +1,131 @@
+{% extends "app.html" %}
+{% block title %}API keys{% endblock %}
+{% block page_title %}API keys{% endblock %}
+{% block content %}
+<header class="page__header">
+  <div class="page__heading">
+    <h2 class="page__title">API keys</h2>
+    <p class="page__subtitle">Keys let your code call {{ settings.model }}. Each one allows {{ key_rpm_limit }} requests and {{ key_tpm_limit | compact }} tokens a minute.</p>
+  </div>
+</header>
+
+{% if gateway_down %}{% include "_gateway_down.html" %}{% endif %}
+
+{% if new_key %}
+<section class="card key-reveal" aria-labelledby="new-key-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="new-key-title">Copy your key now</h2>
+      <p class="card__subtitle" dir="auto">“{{ new_key.info.name }}” is ready to use.</p>
+    </div>
+    <span class="badge badge--success"><span class="badge__dot" aria-hidden="true"></span>Created</span>
+  </header>
+  <div class="card__body key-reveal__body">
+    <div class="copy-field copy-field--key">
+      <span class="copy-field__label">Key</span>
+      <code class="copy-field__value" id="new-key-secret">{{ new_key.secret }}</code>
+      <button class="btn btn--primary btn--sm" type="button" data-copy="#new-key-secret"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg><span data-copy-label>Copy</span></button>
+    </div>
+    <div class="alert alert--warning" role="note">
+      <svg class="icon alert__icon" aria-hidden="true"><use href="#i-warning"/></svg>
+      <p class="alert__title">It will not be shown again</p>
+      <p class="alert__text">Store it in a password manager or an environment variable. If you lose it, revoke it and create a new one.</p>
+    </div>
+    <div class="code">
+      <div class="code__header">
+        <span class="code__lang">Try it</span>
+        <button class="btn btn--ghost btn--sm" type="button" data-copy="#new-key-curl"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg><span data-copy-label>Copy</span></button>
+      </div>
+<pre tabindex="0"><code class="hljs language-bash" id="new-key-curl"><span class="hljs-built_in">curl</span> {{ settings.public_url }}/v1/chat/completions \
+  -H <span class="hljs-string">"Authorization: Bearer {{ new_key.secret }}"</span> \
+  -H <span class="hljs-string">"Content-Type: application/json"</span> \
+  -d <span class="hljs-string">'{"model": "{{ settings.model }}", "messages": [{"role": "user", "content": "Say hello"}]}'</span></code></pre>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="create-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="create-title">Create a key</h2>
+      <p class="card__subtitle">{{ keys | length }} of {{ max_keys }} keys used</p>
+    </div>
+  </header>
+  <div class="card__body">
+    {% if can_create %}
+    <form class="key-form" method="post" action="/keys">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field key-form__field">
+        <label class="field__label" for="key-name">Name</label>
+        <input class="input" id="key-name" name="name" type="text" value="{{ name }}" maxlength="40" required autocomplete="off" dir="auto" placeholder="e.g. Course project"
+               aria-describedby="key-name-help{% if error %} key-name-error{% endif %}"{% if error %} aria-invalid="true"{% endif %}>
+        {% if error %}
+        <p class="field__error" id="key-name-error"><svg class="icon icon--xs" aria-hidden="true"><use href="#i-danger"/></svg>{{ error }}</p>
+        {% endif %}
+        <p class="field__help" id="key-name-help">Only you can see this name.</p>
+      </div>
+      <button class="btn btn--primary" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Create key</button>
+    </form>
+    {% elif not gateway_down %}
+    <div class="alert alert--info" role="note">
+      <svg class="icon alert__icon" aria-hidden="true"><use href="#i-info"/></svg>
+      <p class="alert__title">You have reached {{ max_keys }} keys</p>
+      <p class="alert__text">Revoke one you no longer use to create another.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="card" aria-labelledby="keys-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="keys-title">Your keys</h2>
+      <p class="card__subtitle">A revoked key stops working at once.</p>
+    </div>
+  </header>
+  {% if keys %}
+  <div class="table-wrap" tabindex="0" role="region" aria-labelledby="keys-title">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Key</th>
+          <th scope="col">Created</th>
+          <th scope="col">Last used</th>
+          <th scope="col" class="table__num">Requests ({{ usage_days }}d)</th>
+          <th scope="col" class="table__action"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key in keys %}
+        <tr>
+          <td class="table__name" dir="auto">{{ key.name }}</td>
+          <td><code class="key">{{ key.masked }}</code></td>
+          <td>{{ key.created_at | utc_date }}</td>
+          <td>{{ key.last_active | relative_time if key.last_active else 'Never' }}</td>
+          <td class="table__num">{{ requests_by_key.get(key.token, 0) | number }}</td>
+          <td class="table__action">
+            <details class="confirm">
+              <summary class="btn btn--ghost btn--sm" aria-label="Revoke {{ key.name }}"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-trash"/></svg>Revoke</summary>
+              <form class="confirm__form" method="post" action="/keys/{{ key.token }}/revoke">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <span class="confirm__text">Apps using it will stop working.</span>
+                <button class="btn btn--danger btn--sm" type="submit">Yes, revoke</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif not gateway_down %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg class="icon icon--lg"><use href="#i-key"/></svg></span>
+    <h3 class="empty__title">No API keys yet</h3>
+    <p class="empty__text">Create your first key above to start sending requests. A key is shown once, so copy it straight away.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

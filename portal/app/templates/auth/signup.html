@@ -1,0 +1,64 @@
+{% extends "public.html" %}
+{% block title %}Create account{% endblock %}
+{% block main_class %} site__main--narrow{% endblock %}
+{% macro field_error(id, message) %}
+{% if message %}<p class="field__error" id="{{ id }}"><svg class="icon icon--xs" aria-hidden="true"><use href="#i-danger"/></svg>{{ message }}</p>{% endif %}
+{% endmacro %}
+{% block content %}
+<section class="card auth" aria-labelledby="auth-title">
+  <div class="auth__head">
+    <h1 class="auth__title" id="auth-title">Create your account</h1>
+    <p class="auth__text">Get an API key for {{ settings.model }} in under a minute.</p>
+  </div>
+  {% if not settings.signup_open %}
+  <div class="alert alert--info" role="status">
+    <svg class="icon alert__icon" aria-hidden="true"><use href="#i-info"/></svg>
+    <p class="alert__title">Sign-ups are closed</p>
+    <p class="alert__text">Ask a member of Team 5 for access.</p>
+  </div>
+  {% else %}
+  {% if error %}
+  <div class="alert alert--danger" role="alert"{% if retry_after %} data-retry-after="{{ retry_after }}"{% endif %}>
+    <svg class="icon alert__icon" aria-hidden="true"><use href="#i-danger"/></svg>
+    <p class="alert__text">{{ error }}</p>
+  </div>
+  {% endif %}
+  <form class="auth__form" method="post" action="/signup">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field">
+      <label class="field__label" for="name">Name</label>
+      <input class="input" id="name" name="name" type="text" value="{{ values.name }}" autocomplete="name" maxlength="80" required autofocus dir="auto"
+             {% if errors.name %}aria-invalid="true" aria-describedby="name-error"{% endif %}>
+      {{ field_error('name-error', errors.name) }}
+    </div>
+    <div class="field">
+      <label class="field__label" for="email">Email</label>
+      <input class="input" id="email" name="email" type="email" value="{{ values.email }}" autocomplete="username" autocapitalize="none" maxlength="254" required
+             {% if errors.email %}aria-invalid="true" aria-describedby="email-error"{% endif %}>
+      {{ field_error('email-error', errors.email) }}
+    </div>
+    <div class="field">
+      <label class="field__label" for="password">Password</label>
+      <div class="input-group input-group--trailing">
+        <input class="input" id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required
+               aria-describedby="password-hint{% if errors.password %} password-error{% endif %}"{% if errors.password %} aria-invalid="true"{% endif %}>
+        <button class="btn btn--ghost btn--icon btn--sm input-group__action" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Show password"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-eye"/></svg></button>
+      </div>
+      <p class="field__help" id="password-hint">At least 8 characters.</p>
+      {{ field_error('password-error', errors.password) }}
+    </div>
+    {% if settings.invite_required %}
+    <div class="field">
+      <label class="field__label" for="invite_code">Invite code</label>
+      <input class="input input--mono" id="invite_code" name="invite_code" type="text" autocomplete="off" autocapitalize="none" required
+             aria-describedby="invite-hint{% if errors.invite_code %} invite-code-error{% endif %}"{% if errors.invite_code %} aria-invalid="true"{% endif %}>
+      <p class="field__help" id="invite-hint">Ask a member of Team 5 for the code.</p>
+      {{ field_error('invite-code-error', errors.invite_code) }}
+    </div>
+    {% endif %}
+    <button class="btn btn--primary btn--lg btn--block" type="submit">Create account</button>
+  </form>
+  {% endif %}
+  <p class="auth__alt">Already have an account? <a class="link" href="/login">Sign in</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,34 @@
+{# curl and Python examples in tabs. Needs "base_url"; "qs" is a prefix that keeps ids unique. #}
+{% set qs = qs | default('qs') %}
+<div class="code" role="tabpanel" id="{{ qs }}-panel-curl" aria-labelledby="{{ qs }}-tab-curl">
+  <div class="code__header">
+    <span class="code__lang">bash</span>
+    <button class="btn btn--ghost btn--sm" type="button" data-copy="#{{ qs }}-code-curl"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg><span data-copy-label>Copy</span></button>
+  </div>
+<pre tabindex="0"><code class="hljs language-bash" id="{{ qs }}-code-curl"><span class="hljs-built_in">curl</span> {{ base_url }}/chat/completions \
+  -H <span class="hljs-string">"Authorization: Bearer sk-YOUR-KEY"</span> \
+  -H <span class="hljs-string">"Content-Type: application/json"</span> \
+  -d <span class="hljs-string">'{
+    "model": "{{ settings.model }}",
+    "messages": [{"role": "user", "content": "Say hello"}]
+  }'</span></code></pre>
+</div>
+<div class="code" role="tabpanel" id="{{ qs }}-panel-python" aria-labelledby="{{ qs }}-tab-python" hidden>
+  <div class="code__header">
+    <span class="code__lang">python</span>
+    <button class="btn btn--ghost btn--sm" type="button" data-copy="#{{ qs }}-code-python"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg><span data-copy-label>Copy</span></button>
+  </div>
+<pre tabindex="0"><code class="hljs language-python" id="{{ qs }}-code-python"><span class="hljs-comment"># pip install openai</span>
+<span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="hljs-string">"{{ base_url }}"</span>,
+    api_key=<span class="hljs-string">"sk-YOUR-KEY"</span>,
+)
+
+response = client.chat.completions.create(
+    model=<span class="hljs-string">"{{ settings.model }}"</span>,
+    messages=[{<span class="hljs-string">"role"</span>: <span class="hljs-string">"user"</span>, <span class="hljs-string">"content"</span>: <span class="hljs-string">"Say hello"</span>}],
+)
+<span class="hljs-built_in">print</span>(response.choices[<span class="hljs-number">0</span>].message.content)</code></pre>
+</div>

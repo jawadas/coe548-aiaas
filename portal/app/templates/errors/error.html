@@ -1,0 +1,17 @@
+{% extends "public.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block main_class %} site__main--narrow{% endblock %}
+{% block content %}
+<section class="card auth error-page" data-status="{{ status_code }}" data-code="{{ code }}">
+  <p class="error-page__status">{{ status_code }}</p>
+  <h1 class="auth__title">{{ title }}</h1>
+  <p class="auth__text">{{ message }}</p>
+  {% if retry_after %}
+  <p class="field__help" data-retry-after="{{ retry_after }}">You can try again in {{ retry_after }} seconds.</p>
+  {% endif %}
+  <div class="error-page__actions">
+    <a class="btn btn--primary" href="{{ '/overview' if user else '/' }}">Back to {{ 'your overview' if user else 'the home page' }}</a>
+    {% if not user %}<a class="btn btn--secondary" href="/login">Sign in</a>{% endif %}
+  </div>
+</section>
+{% endblock %}

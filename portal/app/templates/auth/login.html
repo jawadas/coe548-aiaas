@@ -1,0 +1,36 @@
+{% extends "public.html" %}
+{% block title %}Sign in{% endblock %}
+{% block main_class %} site__main--narrow{% endblock %}
+{% block content %}
+<section class="card auth" aria-labelledby="auth-title">
+  <div class="auth__head">
+    <h1 class="auth__title" id="auth-title">Welcome back</h1>
+    <p class="auth__text">Sign in to manage your API keys and chat with the model.</p>
+  </div>
+  {% if error %}
+  <div class="alert alert--danger" role="alert"{% if retry_after %} data-retry-after="{{ retry_after }}"{% endif %}>
+    <svg class="icon alert__icon" aria-hidden="true"><use href="#i-danger"/></svg>
+    <p class="alert__text">{{ error }}</p>
+  </div>
+  {% endif %}
+  <form class="auth__form" method="post" action="/login">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label class="field__label" for="email">Email</label>
+      <input class="input" id="email" name="email" type="email" value="{{ email }}" autocomplete="username" autocapitalize="none" required autofocus>
+    </div>
+    <div class="field">
+      <label class="field__label" for="password">Password</label>
+      <div class="input-group input-group--trailing">
+        <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+        <button class="btn btn--ghost btn--icon btn--sm input-group__action" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Show password"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-eye"/></svg></button>
+      </div>
+    </div>
+    <button class="btn btn--primary btn--lg btn--block" type="submit">Sign in</button>
+  </form>
+  {% if settings.signup_open %}
+  <p class="auth__alt">New here? <a class="link" href="/signup">Create an account</a></p>
+  {% endif %}
+</section>
+{% endblock %}

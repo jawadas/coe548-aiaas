@@ -1,0 +1,13 @@
+# The build context is an allow-list: everything is ignored unless it is
+# re-included below. The image needs the pinned requirements and the app,
+# nothing else (no .venv, no tests, no dev tooling).
+*
+!requirements.txt
+!app/
+
+# Never ship caches or local files, even from inside app/.
+**/__pycache__/
+**/*.py[cod]
+**/.DS_Store
+**/.env
+**/.env.*
