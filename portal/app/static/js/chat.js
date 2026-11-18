@@ -13,9 +13,10 @@
   if (!root) return;
 
   var STORE = 'aiaas.chats.v1';
-  var SETTINGS = 'aiaas.chat.settings.v1';
+  var SETTINGS = 'aiaas.chat.settings.v2';
   var MAX_CHATS = 30;
-  var DEFAULTS = { temperature: 0.7, max_tokens: 2048, reasoning_effort: 'medium', system: '' };
+  var DEFAULTS = { temperature: 0.7, max_tokens: 4096, reasoning_effort: 'medium', system: '' };
+  var MAX_TEMPERATURE = 1;  // above this the model's output turns to gibberish
   var SVG = 'http://www.w3.org/2000/svg';
 
   var $ = function (selector) { return root.querySelector(selector); };
@@ -59,7 +60,7 @@
     var saved = load(SETTINGS, {});
     var effort = document.querySelector('input[name="set-effort"]:checked');
     return {
-      temperature: parseFloat(temperature.value),
+      temperature: Math.min(MAX_TEMPERATURE, parseFloat(temperature.value) || 0),
       max_tokens: Math.min(8192, Math.max(16, parseInt(maxTokens.value, 10) || DEFAULTS.max_tokens)),
       reasoning_effort: effort ? effort.value : saved.reasoning_effort || DEFAULTS.reasoning_effort,
       system: systemPrompt.value.trim(),
@@ -67,7 +68,7 @@
   }
 
   function applySettings(values) {
-    temperature.value = values.temperature;
+    temperature.value = Math.min(MAX_TEMPERATURE, values.temperature);
     maxTokens.value = values.max_tokens;
     systemPrompt.value = values.system;
     var effort = document.getElementById('set-effort-' + values.reasoning_effort);

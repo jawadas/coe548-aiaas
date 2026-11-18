@@ -49,8 +49,9 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=MAX_MESSAGES)
-    temperature: float = Field(default=0.7, ge=0, le=2)
-    max_tokens: int = Field(default=2048, ge=16, le=8192)
+    # gpt-oss-20b turns to gibberish well before the API's usual maximum of 2.
+    temperature: float = Field(default=0.7, ge=0, le=1)
+    max_tokens: int = Field(default=4096, ge=16, le=8192)
     reasoning_effort: Literal["low", "medium", "high"] = "medium"
 
 
