@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """End-to-end check of the whole platform through its public URL.
 
-Signs a new user up on the portal, creates an API key, calls the model with it
+Checks that sign-up needs the invite code, signs a new user up on the portal,
+signs out and back in, creates an API key, calls the model with it
 (plain and streaming), runs into the rate limit, sees the usage appear, chats in
 the playground, then revokes the key and confirms it stops working.
 
@@ -83,16 +84,36 @@ def main() -> int:
     status, _, _ = call("GET", "/v1/models")
     check("/v1/models needs a key", status == 401, f"HTTP {status}")
 
-    # -- sign up -----------------------------------------------------------
+    # -- sign up ---------------------------------------------------------------
     email = f"e2e-{int(time.time())}@example.test"
+    password = f"e2e-{time.time_ns()}"
+    account = {"name": "E2E Tester", "email": email, "password": password}
+
     _, _, page = call("GET", "/signup")
-    status, _, page = call(
-        "POST",
-        "/signup",
-        form={"csrf_token": csrf(page), "name": "E2E Tester", "email": email,
-              "password": f"e2e-{time.time_ns()}", "invite_code": INVITE},
-    )
+    status, _, page = call("POST", "/signup", form={"csrf_token": csrf(page), **account, "invite_code": "wrong-code"})
+    check("sign-up with a wrong invite code is refused", status != 200 or "Welcome" not in page, f"HTTP {status}")
+    _, _, page = call("GET", "/overview")
+    check("no session after the refused sign-up", "Welcome, E2E" not in page)
+    _, _, page = call("GET", "/signup")
+    status, _, page = call("POST", "/signup", form={"csrf_token": csrf(page), **account})
+    check("sign-up without an invite code is refused", "Welcome" not in page, f"HTTP {status}")
+    _, _, page = call("GET", "/signup")
+    status, _, page = call("POST", "/signup", form={**account, "invite_code": INVITE})
+    check("sign-up without the CSRF token is refused", status == 403, f"HTTP {status}")
+
+    _, _, page = call("GET", "/signup")
+    status, _, page = call("POST", "/signup", form={"csrf_token": csrf(page), **account, "invite_code": INVITE})
     check("sign up and land on the overview", status == 200 and "Welcome" in page, f"HTTP {status}")
+
+    # -- sign out, sign in -------------------------------------------------------
+    status, _, page = call("POST", "/logout", form={"csrf_token": csrf(page)})
+    check("sign out", status == 200, f"HTTP {status}")
+    status, _, page = call("GET", "/overview")
+    check("signed out: the overview asks to sign in", "Welcome back" in page and "password" in page, f"HTTP {status}")
+    status, _, page = call("POST", "/login", form={"csrf_token": csrf(page), "email": email, "password": "not-my-password"})
+    check("sign-in with a wrong password is refused", "Invalid email or password" in page, f"HTTP {status}")
+    status, _, page = call("POST", "/login", form={"csrf_token": csrf(page), "email": email, "password": password})
+    check("sign in again", status == 200 and "Welcome, E2E" in page, f"HTTP {status}")
 
     # -- create a key ------------------------------------------------------
     _, _, page = call("GET", "/keys")
