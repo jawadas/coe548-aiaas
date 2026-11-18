@@ -107,3 +107,35 @@ def test_chat_history_keeps_the_system_prompt_and_the_newest_turns() -> None:
     assert sent[-1]["content"] == "latest question"
     assert sum(len(m["content"]) for m in sent[1:]) <= HISTORY_BUDGET
     assert len(sent) < len(messages)
+
+
+async def test_health_is_offline_when_the_gateway_answers_503() -> None:
+    """With no GPU pod the gateway answers /health with a 503 and the unhealthy list."""
+    import httpx
+
+    from app.gateway import GatewayClient
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = {
+            "healthy_endpoints": [],
+            "unhealthy_endpoints": [{"error": "404"}],
+            "healthy_count": 0,
+        }
+        return httpx.Response(503, json=body)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        health = await GatewayClient("http://gateway", "sk-master", "gpt-oss-20b", http).health()
+    assert health.state == "offline"
+
+
+async def test_health_is_unknown_when_the_gateway_cannot_be_reached() -> None:
+    import httpx
+
+    from app.gateway import GatewayClient
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("connection refused")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        health = await GatewayClient("http://gateway", "sk-master", "gpt-oss-20b", http).health()
+    assert health.state == "unknown"

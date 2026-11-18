@@ -52,4 +52,9 @@ docker compose exec -T portal python -m app.cli selfcheck
 
 echo
 echo "Deployed. Invite code for sign-up: $(grep '^PORTAL_INVITE_CODE=' .env | cut -d= -f2-)"
-echo "Roll back with: git checkout $(cat "$backup/commit" 2>/dev/null || echo '<previous commit>') && scripts/deploy.sh"
+previous=$(cat ~/aiaas-backups/last-deployed 2>/dev/null || true)
+current=$(git rev-parse HEAD)
+if [ -n "$previous" ] && [ "$previous" != "$current" ]; then
+  echo "Roll back with: git checkout $previous && scripts/deploy.sh"
+fi
+echo "$current" > ~/aiaas-backups/last-deployed
