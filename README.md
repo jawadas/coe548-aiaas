@@ -134,13 +134,14 @@ Users never see the pod URL or the pod key. The gateway's admin API is not reach
 
 ## GPU pod
 
-The pod costs money while it runs. Terminate it when nobody is testing. While no pod is running, the API returns an error and the portal shows "GPU offline"; the rest of the platform stays up.
+The pod costs money while it runs. Terminate it when nobody is testing; the weights stay on the network volume, so the next pod loads in a few minutes. While no pod is running, the API returns an error and the portal shows "GPU offline", but the rest of the platform stays up.
 
-To start one: RunPod > Pods > Deploy, and use:
+To start one: RunPod > Pods > Deploy, attach the network volume, and use:
 
-- Image: `vllm/vllm-openai:v0.34.0`
+- Image: `vllm/vllm-openai:latest`
+- Volume mount path: `/workspace`
 - HTTP port: `8000`
-- Volume mount path: `/workspace`, environment variable `HF_HOME=/workspace/hf`
+- Environment variable: `HF_HOME=/workspace/hf`
 - Start command:
 
 ```
@@ -150,7 +151,7 @@ To start one: RunPod > Pods > Deploy, and use:
 A new pod gets a new address. Update the VM and apply:
 
 ```bash
-nano ~/aiaas/.env     # set VLLM_API_BASE=https://<pod-id>-8000.proxy.runpod.net/v1 and VLLM_API_KEY
+nano ~/aiaas/.env     # set VLLM_API_BASE=https://<pod-id>-8000.proxy.runpod.net/v1
 docker compose up -d
 ```
 
