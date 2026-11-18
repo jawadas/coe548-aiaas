@@ -4,6 +4,18 @@ A self-service API platform for OpenAI's open-weight **gpt-oss-20b**. Users sign
 
 Live at: https://coe548.spaincentral.cloudapp.azure.com
 
+## What it looks like
+
+| Landing page | Overview |
+|---|---|
+| ![Landing page](docs/screenshots/landing.png) | ![Overview](docs/screenshots/overview.png) |
+
+| Chat playground | When the GPU is off |
+|---|---|
+| ![Chat playground](docs/screenshots/chat.png) | ![GPU offline](docs/screenshots/chat-offline.png) |
+
+Screenshots are from the local stack, with demo data and the mock model.
+
 ## How it fits together
 
 ```
