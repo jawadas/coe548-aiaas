@@ -443,7 +443,7 @@
     function finish(aborted) {
       var seconds = (performance.now() - started) / 1000;
       var tokens = usage && usage.completion_tokens;
-      var writing = firstContent || firstReasoning;
+      var writing = firstReasoning || firstContent;  // the first token of any kind
       if (frame) { window.cancelAnimationFrame(frame); frame = 0; }
       message.streaming = false;
       message.stopped = aborted || undefined;
