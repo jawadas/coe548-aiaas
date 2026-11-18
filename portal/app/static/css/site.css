@@ -416,11 +416,6 @@ nav.segmented {
   font-weight: var(--weight-semibold);
 }
 
-.team__roles {
-  margin-block-start: var(--space-1);
-  color: var(--text-secondary);
-}
-
 /* ---- Docs ---- */
 .docs {
   display: grid;
