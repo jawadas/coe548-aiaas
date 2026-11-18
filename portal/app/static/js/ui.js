@@ -257,7 +257,7 @@
 
 
   /* ---- Model status pill: online / offline, from /api/status ------------ */
-  var STATUS_TEXT = { online: 'online', offline: 'GPU offline', unknown: 'checking' };
+  var STATUS_TEXT = { online: 'online', offline: 'GPU offline', unknown: 'Model unavailable' };
 
   function paintStatus(state) {
     root.setAttribute('data-model', state);

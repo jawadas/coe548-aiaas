@@ -548,7 +548,7 @@
   $('#chat-settings').addEventListener('change', storeSettings);
 
   document.addEventListener('aiaas:status', function (event) {
-    var nowOffline = event.detail.state === 'offline';
+    var nowOffline = event.detail.state !== 'online';
     if (nowOffline === offline) return;
     offline = nowOffline;
     paintState();

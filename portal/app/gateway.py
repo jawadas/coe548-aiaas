@@ -922,9 +922,9 @@ class GatewayClient:
         """Ask the gateway to make a tiny real call to the model.
 
         ``online`` when at least one deployment answers; ``offline`` when none
-        does or the check hangs (the gateway can sit on a dead upstream for a
-        minute, hence the short timeout); ``unknown`` when the gateway itself
-        cannot be asked.
+        does (the gateway then answers 503) or the check hangs (the gateway can
+        sit on a dead upstream for a minute, hence the short timeout);
+        ``unknown`` when the gateway itself cannot be asked.
         """
         started = time.perf_counter()
         try:
@@ -934,7 +934,10 @@ class GatewayClient:
                 )
             )
         except GatewayError as exc:
-            state: HealthState = "offline" if exc.code == "gateway_timeout" else "unknown"
+            # With no healthy deployment the gateway answers /health itself, with a 503:
+            # it is reachable and the model is not.
+            model_down = exc.code == "gateway_timeout" or exc.status == 503
+            state: HealthState = "offline" if model_down else "unknown"
             return ModelHealth(state, None, dt.datetime.now(dt.UTC), exc.message)
         return ModelHealth.from_gateway(data, round((time.perf_counter() - started) * 1000))
 
