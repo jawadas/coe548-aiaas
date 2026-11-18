@@ -42,13 +42,18 @@ echo "Backup: $backup"
 docker compose up -d --build
 docker compose restart caddy
 
-# 4. Wait for the portal, then let it check itself.
+# 4. Wait for the portal and the gateway (it takes a while to start after a
+#    restart), then let the portal check itself.
 for _ in $(seq 1 60); do
   [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q portal)" 2>/dev/null)" = healthy ] && break
   sleep 2
 done
+for _ in $(seq 1 60); do
+  [ "$(curl -s -o /dev/null -w '%{http_code}' -m 3 http://127.0.0.1:4000/health/readiness)" = 200 ] && break
+  sleep 3
+done
 docker compose ps --format 'table {{.Name}}\t{{.Status}}'
-docker compose exec -T portal python -m app.cli selfcheck
+docker compose exec -T portal python -m app.cli selfcheck </dev/null
 
 echo
 echo "Deployed. Invite code for sign-up: $(grep '^PORTAL_INVITE_CODE=' .env | cut -d= -f2-)"
