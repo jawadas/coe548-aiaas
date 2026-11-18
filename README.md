@@ -1,111 +1,162 @@
-COE 548 AIaaS Platform (Team 5)
+# COE 548 AIaaS Platform (Team 5)
 
-Serves OpenAI's gpt-oss-20b through an OpenAI-compatible API, with per-user API keys, rate limits and usage tracking.
+A self-service API platform for OpenAI's open-weight **gpt-oss-20b**. Users sign up on a web portal, create an API key, and call the model from their own code through an OpenAI-compatible API, with per-key rate limits and usage metering.
 
 Live at: https://coe548.spaincentral.cloudapp.azure.com
 
-How it fits together
-User --HTTPS--> Caddy --/v1/*--> LiteLLM gateway --> vLLM on RunPod (GPU)
-                  |                    |
-                  +--/* (portal)       +--> PostgreSQL (keys, usage)
-Azure VM (always on): Caddy, LiteLLM, PostgreSQL, all in Docker Compose.
-RunPod pod (on demand): vLLM serving gpt-oss-20b. Started only when needed.
-What works today
-Model served on a RunPod GPU, weights stored on a network volume
-Gateway reachable over HTTPS with a valid certificate
-API keys created through the gateway's admin API
-Per-key rate limits (tested: requests over the limit return 429)
-Token usage recorded per key
-What is not built yet
-Area	Owner
-Portal: sign-up, login, key issue page, usage page	Omar
-API documentation with Python and curl examples	Omar
-Gateway: quotas, key-creation flow for the portal, usage reporting	Ammar
-Monitoring (Prometheus, Grafana), second GPU replica, load tests	Ali
-Files
-File	Purpose
-docker-compose.yml	The three services on the VM
-Caddyfile	HTTPS and routing. Only /v1/* goes to the gateway
-config.yaml	LiteLLM model list and settings
-.env.example	Names of the required settings. Real values are in .env on the VM
-Working on the VM
+## How it fits together
 
-The stack lives in ~/aiaas on the VM. Real secrets are in ~/aiaas/.env there and are never committed.
+```
+                      ┌──────────────── Azure VM (always on, Docker Compose) ────────────────┐
+User ──HTTPS──> Caddy ─┬─ /v1/chat/completions, /v1/models ──> LiteLLM gateway ──> vLLM on a RunPod GPU pod
+                       │                                          │                (on demand)
+                       └─ everything else ──> Portal (FastAPI) ───┤
+                                                  │               │
+                                                  └──> PostgreSQL <┘   (two databases: portal, litellm)
+```
 
-bash
+- **Caddy**: TLS and routing. Only the two model routes reach the gateway; every other `/v1` path gets a 404.
+- **Portal** (`portal/`): accounts, API keys, usage, a chat playground and the API docs. It talks to the gateway's admin API on the internal network.
+- **LiteLLM gateway**: checks keys, enforces rate limits, records usage.
+- **vLLM on RunPod**: serves the model. Started only when needed. While no pod is running the API returns an error, the portal shows "GPU offline", and everything else stays up.
+
+## What works
+
+| Area | State |
+|---|---|
+| Model served on a RunPod GPU through vLLM | Done |
+| Gateway over HTTPS, API keys, per-key rate limits (429 over the limit), token usage per key | Done |
+| Portal: sign-up with an invite code, sign-in, create and revoke API keys | Done |
+| Portal: usage per day and per key, CSV export | Done |
+| Portal: chat playground (streaming, shows the model's reasoning) | Done |
+| API documentation with curl, Python and JavaScript examples (`/docs`) | Done |
+| Monitoring (Prometheus, Grafana), second GPU replica, load tests | Not built yet |
+| Model pricing in the gateway, for cost per million tokens | Not built yet |
+
+## Files
+
+| Path | Purpose |
+|---|---|
+| `docker-compose.yml` | The services on the VM |
+| `Caddyfile` | HTTPS and routing |
+| `config.yaml` | LiteLLM model list and settings |
+| `portal/` | The portal: FastAPI app, templates, tests, Dockerfile |
+| `scripts/deploy.sh` | Deploys the current checkout on the VM |
+| `scripts/e2e.py` | End-to-end check through the public URL |
+| `.env.example` | Names of the required settings. Real values are in `.env` on the VM |
+| `docker-compose.dev.yml`, `Caddyfile.dev`, `dev/mock_vllm/` | Local development: a mock model, so no GPU is needed |
+
+## The portal
+
+| Page | What it does |
+|---|---|
+| `/` | Landing page with the model's live status |
+| `/signup`, `/login` | Accounts. Sign-up needs the invite code (`PORTAL_INVITE_CODE` in `.env`) |
+| `/overview` | Today's requests and tokens, a 14-day chart, quickstart |
+| `/keys` | Create a key (shown once) and revoke keys. Up to 5 per user |
+| `/usage` | Totals, daily chart, per-key breakdown, recent requests, CSV export |
+| `/chat` | Chat with the model. Conversations are kept in the browser |
+| `/docs` | API documentation |
+
+Each new key gets 10 requests and 30,000 tokens a minute; each account 30 requests and 60,000 tokens a minute across its keys. These defaults are `PORTAL_*` settings in `docker-compose.yml`.
+
+The first account to sign up becomes the admin. To change roles later:
+
+```bash
+docker compose exec portal python -m app.cli list-users
+docker compose exec portal python -m app.cli promote someone@example.com
+```
+
+## Working on the VM
+
+The stack lives in `~/aiaas`. Real secrets are in `~/aiaas/.env` there and are never committed.
+
+```bash
 cd ~/aiaas
-docker compose ps                # what is running
-docker compose logs -f litellm   # follow a service's logs
-docker compose up -d             # apply changes to compose, config or .env
-docker compose restart litellm   # after editing config.yaml only
+git pull && scripts/deploy.sh     # deploy: backs up, rebuilds, restarts what changed, self-checks
+docker compose ps                 # what is running
+docker compose logs -f portal     # follow a service's logs
+docker compose exec portal python -m app.cli selfcheck
+```
 
-There is one live stack shared by all of us. Commit every change to docker-compose.yml, Caddyfile or config.yaml with a clear message.
+`scripts/deploy.sh` is safe to run repeatedly. It writes a backup of both databases and `.env` to `~/aiaas-backups/` first, and prints the invite code at the end.
 
-Using the API
+There is one live stack shared by all of us. Commit every change with a clear message.
 
-Create a key (on the VM; the admin API is not exposed to the internet):
+## Using the API
 
-bash
-cd ~/aiaas && source .env
-curl -s http://localhost:4000/key/generate \
-  -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"key_alias":"some-user","models":["gpt-oss-20b"],"rpm_limit":5}'
+Create a key on the portal, then:
 
-Call the model from anywhere with the key it returns:
-
-bash
+```bash
 curl https://coe548.spaincentral.cloudapp.azure.com/v1/chat/completions \
-  -H "Authorization: Bearer sk-USER-KEY" \
+  -H "Authorization: Bearer sk-YOUR-KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-oss-20b","messages":[{"role":"user","content":"Say hello"}]}'
+```
 
-Python:
-
-python
+```python
 from openai import OpenAI
 
 client = OpenAI(
     base_url="https://coe548.spaincentral.cloudapp.azure.com/v1",
-    api_key="sk-USER-KEY",
+    api_key="sk-YOUR-KEY",
 )
 r = client.chat.completions.create(
     model="gpt-oss-20b",
     messages=[{"role": "user", "content": "Say hello"}],
 )
 print(r.choices[0].message.content)
+```
 
-Check a key's usage (on the VM):
+The full reference, with streaming, rate limits and errors, is at `/docs` on the site.
 
-bash
-curl -s "http://localhost:4000/key/info?key=sk-USER-KEY" \
-  -H "Authorization: Bearer $LITELLM_MASTER_KEY"
-The two kinds of keys
-Key	Used by	Where it lives
-Gateway keys (sk-...)	Users, sent to the public URL	Created with /key/generate
-Master key	Admin API only	LITELLM_MASTER_KEY in .env
-Pod key	Only the gateway, to call vLLM	VLLM_API_KEY in .env
+## The kinds of keys
 
-Users never see the pod URL or the pod key.
+| Key | Used by | Where it lives |
+|---|---|---|
+| User keys (`sk-...`) | Users, sent to the public URL | Created on the portal's API keys page |
+| Master key | The portal and admins, on the internal network only | `LITELLM_MASTER_KEY` in `.env` |
+| Pod key | Only the gateway, to call vLLM | `VLLM_API_KEY` in `.env` |
 
-GPU pod
+Users never see the pod URL or the pod key. The gateway's admin API is not reachable from the internet.
 
-The pod costs money while it runs. Terminate it when nobody is testing; the weights stay on the network volume, so the next pod loads in a few minutes. While no pod is running, the API returns an error but the rest of the platform stays up.
+## GPU pod
 
-To start one: RunPod > Pods > Deploy, attach the network volume, and use:
+The pod costs money while it runs. Terminate it when nobody is testing. While no pod is running, the API returns an error and the portal shows "GPU offline"; the rest of the platform stays up.
 
-Image: vllm/vllm-openai:latest
-Volume mount path: /workspace
-HTTP port: 8000
-Environment variable: HF_HOME=/workspace/hf
-Start command:
+To start one: RunPod > Pods > Deploy, and use:
+
+- Image: `vllm/vllm-openai:v0.34.0`
+- HTTP port: `8000`
+- Volume mount path: `/workspace`, environment variable `HF_HOME=/workspace/hf`
+- Start command:
+
+```
 --host 0.0.0.0 --port 8000 --model openai/gpt-oss-20b --served-model-name gpt-oss-20b --gpu-memory-utilization 0.90 --max-model-len 32768 --api-key <POD_KEY>
+```
 
 A new pod gets a new address. Update the VM and apply:
 
-bash
-nano ~/aiaas/.env     # set VLLM_API_BASE=https://<pod-id>-8000.proxy.runpod.net/v1
+```bash
+nano ~/aiaas/.env     # set VLLM_API_BASE=https://<pod-id>-8000.proxy.runpod.net/v1 and VLLM_API_KEY
 docker compose up -d
-Rules
-Never commit .env or paste real keys in chat or in code.
-Do not change POSTGRES_PASSWORD or LITELLM_MASTER_KEY; existing data depends on them.
+```
+
+## Local development
+
+No GPU needed: a small mock model stands in for vLLM.
+
+```bash
+cp .env.example .env    # fill in local values; PORTAL_INVITE_CODE is overridden to "local-invite"
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# portal: http://localhost:8088    gateway admin: http://127.0.0.1:4000
+
+BASE_URL=http://localhost:8088 INVITE_CODE=local-invite python3 scripts/e2e.py   # end-to-end check
+cd portal && uv venv .venv --python 3.13 && uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt
+.venv/bin/python -m pytest -q                                                    # unit tests
+```
+
+## Rules
+
+- Never commit `.env` or paste real keys in chat or in code.
+- Do not change `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY` or `PORTAL_SECRET_KEY`; existing data depends on them.

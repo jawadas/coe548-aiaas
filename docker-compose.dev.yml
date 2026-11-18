@@ -1,7 +1,6 @@
 # Local development overrides. Never used on the VM.
 #
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-#   (or: scripts/dev-up.sh, which runs exactly that and prints the local URLs)
 #
 # Adds a mock model (so no GPU is needed), publishes ports on localhost,
 # swaps Caddy to plain HTTP on http://localhost:8088 and runs the portal in

@@ -1,0 +1,57 @@
+{# The signed-in shell: sidebar, top bar, page. Pages fill "page_title" and "content". #}
+{% extends "base.html" %}
+{% macro nav_item(href, key, icon, label) %}
+<a class="nav__item" href="{{ href }}"{% if nav_active == key %} aria-current="page"{% endif %}><svg class="icon" aria-hidden="true"><use href="#i-{{ icon }}"/></svg>{{ label }}</a>
+{% endmacro %}
+{% block body %}
+<div class="shell{% block shell_class %}{% endblock %}" id="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <a class="brand" href="/overview" aria-label="AIaaS home">
+      <svg class="brand__mark" aria-hidden="true"><use href="#logo"/></svg>
+      <span class="brand__name">AI<span>aaS</span></span>
+    </a>
+    <nav class="nav" aria-label="Platform">
+      {{ nav_item('/overview', 'overview', 'overview', 'Overview') }}
+      {{ nav_item('/chat', 'chat', 'chat', 'Playground') }}
+      {{ nav_item('/keys', 'keys', 'key', 'API keys') }}
+      {{ nav_item('/usage', 'usage', 'usage', 'Usage') }}
+      {{ nav_item('/docs', 'docs', 'docs', 'Docs') }}
+    </nav>
+    <div class="sidebar__footer">
+      <div class="user">
+        <span class="avatar" aria-hidden="true">{{ user.name[:1] | upper }}</span>
+        <span class="user__text">
+          <span class="user__name" dir="auto">{{ user.name }}</span>
+          <span class="user__email">{{ user.email }}</span>
+        </span>
+        <form method="post" action="/logout">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn btn--ghost btn--icon btn--sm" type="submit" aria-label="Sign out" title="Sign out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-logout"/></svg></button>
+        </form>
+      </div>
+    </div>
+  </aside>
+  <button class="scrim" type="button" data-drawer-close tabindex="-1" aria-label="Close navigation"></button>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn--ghost btn--icon topbar__menu" type="button" data-drawer-open="nav" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+        <svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>
+      </button>
+      <h1 class="topbar__title">{% block page_title %}{% endblock %}</h1>
+      <div class="topbar__actions">
+        {% include "_status_pill.html" %}
+        <button class="btn btn--ghost btn--icon theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme">
+          <svg class="icon theme-toggle__sun" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="icon theme-toggle__moon" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+      </div>
+    </header>
+    {% block main %}
+    <main class="page" id="main">
+      {% include "_flash.html" %}
+      {% block content %}{% endblock %}
+    </main>
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}

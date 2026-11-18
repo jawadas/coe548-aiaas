@@ -1,0 +1,270 @@
+{% extends "app.html" if user else "public.html" %}
+{% block title %}API documentation{% endblock %}
+{% block page_title %}Docs{% endblock %}
+{% block main_class %} site__main--docs{% endblock %}
+{% macro code(id, lang, label=None) %}
+<div class="code">
+  <div class="code__header">
+    <span class="code__lang">{{ label or lang }}</span>
+    <button class="btn btn--ghost btn--sm" type="button" data-copy="#{{ id }}"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg><span data-copy-label>Copy</span></button>
+  </div>
+<pre tabindex="0"><code class="language-{{ lang }}" id="{{ id }}">{{ caller() }}</code></pre>
+</div>
+{% endmacro %}
+{% block content %}
+<div class="docs">
+  <nav class="docs__toc card" aria-label="On this page">
+    <p class="docs__toc-title">API documentation</p>
+    <ol>
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#quickstart">Quickstart</a></li>
+      <li><a href="#authentication">Authentication</a></li>
+      <li><a href="#endpoints">Endpoints</a></li>
+      <li><a href="#chat">Chat completions</a></li>
+      <li><a href="#streaming">Streaming</a></li>
+      <li><a href="#reasoning">Reasoning</a></li>
+      <li><a href="#limits">Rate limits</a></li>
+      <li><a href="#errors">Errors</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#model">The model</a></li>
+    </ol>
+  </nav>
+
+  <article class="docs__article card prose">
+    <section id="introduction">
+      <h1>AIaaS API</h1>
+      <p>An OpenAI-compatible API for <strong>{{ settings.model }}</strong>, an open-weight model served with vLLM on an on-demand GPU. If your code already talks to the OpenAI API, change the base URL and the key and it works here.</p>
+      <div class="quickstart__endpoints">
+        <div class="copy-field">
+          <span class="copy-field__label">Base URL</span>
+          <code class="copy-field__value" id="docs-base-url">{{ base_url }}</code>
+          <button class="btn btn--ghost btn--icon btn--sm" type="button" data-copy="#docs-base-url" aria-label="Copy base URL"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg></button>
+        </div>
+        <div class="copy-field">
+          <span class="copy-field__label">Model</span>
+          <code class="copy-field__value" id="docs-model">{{ settings.model }}</code>
+          <button class="btn btn--ghost btn--icon btn--sm" type="button" data-copy="#docs-model" aria-label="Copy model name"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2>Quickstart</h2>
+      <ol>
+        <li><a href="/signup">Create an account</a> (you need the invite code from Team 5).</li>
+        <li>Open <a href="/keys">API keys</a> and create a key. It is shown once: copy it.</li>
+        <li>Send a request. Replace <code>sk-YOUR-KEY</code> with your key.</li>
+      </ol>
+      <h3>curl</h3>
+      {% call code('ex-curl', 'bash') %}curl {{ base_url }}/chat/completions \
+  -H "Authorization: Bearer sk-YOUR-KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "{{ settings.model }}",
+    "messages": [{"role": "user", "content": "Say hello"}]
+  }'{% endcall %}
+      <h3>Python</h3>
+      <p>Install the official SDK with <code>pip install openai</code>.</p>
+      {% call code('ex-python', 'python') %}from openai import OpenAI
+
+client = OpenAI(
+    base_url="{{ base_url }}",
+    api_key="sk-YOUR-KEY",
+)
+
+response = client.chat.completions.create(
+    model="{{ settings.model }}",
+    messages=[{"role": "user", "content": "Say hello"}],
+)
+print(response.choices[0].message.content){% endcall %}
+      <h3>JavaScript</h3>
+      <p>Install the official SDK with <code>npm install openai</code>.</p>
+      {% call code('ex-js', 'javascript') %}import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "{{ base_url }}",
+  apiKey: "sk-YOUR-KEY",
+});
+
+const response = await client.chat.completions.create({
+  model: "{{ settings.model }}",
+  messages: [{ role: "user", content: "Say hello" }],
+});
+console.log(response.choices[0].message.content);{% endcall %}
+    </section>
+
+    <section id="authentication">
+      <h2>Authentication</h2>
+      <p>Send your key in the <code>Authorization</code> header of every request:</p>
+      {% call code('ex-auth', 'http', 'header') %}Authorization: Bearer sk-YOUR-KEY{% endcall %}
+      <p>A key is shown once, when you create it. Keep it out of source control. If one leaks, revoke it on the <a href="/keys">API keys</a> page: it stops working at once. A missing, wrong or revoked key gets <code>401</code>.</p>
+    </section>
+
+    <section id="endpoints">
+      <h2>Endpoints</h2>
+      <p>The public API has two routes. Anything else under <code>/v1</code> returns <code>404</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge--info">POST</span></td><td><code>/v1/chat/completions</code></td><td>Generate a reply to a conversation</td></tr>
+            <tr><td><span class="badge badge--success">GET</span></td><td><code>/v1/models</code></td><td>List the models your key can use</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="chat">
+      <h2>Chat completions</h2>
+      <p><code>POST /v1/chat/completions</code> takes the same JSON body as the OpenAI API.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>model</code></td><td>string, required</td><td>Use <code>{{ settings.model }}</code></td></tr>
+            <tr><td><code>messages</code></td><td>array, required</td><td>The conversation: objects with <code>role</code> (<code>system</code>, <code>user</code> or <code>assistant</code>) and <code>content</code></td></tr>
+            <tr><td><code>stream</code></td><td>boolean</td><td>Send the reply piece by piece as it is generated. Default <code>false</code></td></tr>
+            <tr><td><code>temperature</code></td><td>number, 0 to 2</td><td>Lower is more predictable, higher is more varied</td></tr>
+            <tr><td><code>max_tokens</code></td><td>integer</td><td>Upper bound on generated tokens, reasoning included</td></tr>
+            <tr><td><code>top_p</code>, <code>stop</code>, <code>seed</code></td><td></td><td>As in the OpenAI API</td></tr>
+            <tr><td><code>reasoning_effort</code></td><td><code>low</code>, <code>medium</code>, <code>high</code></td><td>How long the model thinks before it answers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The response:</p>
+      {% call code('ex-response', 'json') %}{
+  "id": "chatcmpl-0fb8483bffff4070a6b6e7e3",
+  "object": "chat.completion",
+  "model": "{{ settings.model }}",
+  "choices": [
+    {
+      "index": 0,
+      "finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "Hello! How can I help you today?",
+        "reasoning_content": "The user greets me. I should greet them back briefly."
+      }
+    }
+  ],
+  "usage": { "prompt_tokens": 6, "completion_tokens": 75, "total_tokens": 81 }
+}{% endcall %}
+    </section>
+
+    <section id="streaming">
+      <h2>Streaming</h2>
+      <p>With <code>"stream": true</code> the reply arrives as server-sent events: lines that start with <code>data:</code>, each holding a JSON chunk, ending with <code>data: [DONE]</code>. Use streaming for long answers so the connection stays active while the model writes.</p>
+      {% call code('ex-stream-curl', 'bash') %}curl -N {{ base_url }}/chat/completions \
+  -H "Authorization: Bearer sk-YOUR-KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "{{ settings.model }}",
+    "stream": true,
+    "stream_options": {"include_usage": true},
+    "messages": [{"role": "user", "content": "Count to five"}]
+  }'{% endcall %}
+      {% call code('ex-stream-python', 'python') %}stream = client.chat.completions.create(
+    model="{{ settings.model }}",
+    messages=[{"role": "user", "content": "Count to five"}],
+    stream=True,
+    stream_options={"include_usage": True},
+)
+for chunk in stream:
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)
+    if chunk.usage:
+        print("\n", chunk.usage.total_tokens, "tokens"){% endcall %}
+      <p>With <code>stream_options.include_usage</code> the last chunk before <code>[DONE]</code> has an empty <code>choices</code> list and the <code>usage</code> totals.</p>
+    </section>
+
+    <section id="reasoning">
+      <h2>Reasoning</h2>
+      <p>{{ settings.model }} thinks before it answers. The thinking is returned separately from the answer, in <code>reasoning_content</code>: on the message for a normal response, and on <code>delta</code> while streaming (reasoning pieces come first, then <code>content</code> pieces). Reasoning tokens count toward <code>completion_tokens</code> and toward <code>max_tokens</code>, so leave room for them. Set <code>reasoning_effort</code> to <code>low</code> for quick answers.</p>
+    </section>
+
+    <section id="limits">
+      <h2>Rate limits</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Applies to</th><th scope="col">Requests per minute</th><th scope="col">Tokens per minute</th></tr></thead>
+          <tbody>
+            <tr><td>Each API key</td><td>{{ key_rpm_limit | number }}</td><td>{{ key_tpm_limit | number }}</td></tr>
+            <tr><td>Your account, all keys together</td><td>{{ user_rpm_limit | number }}</td><td>{{ user_tpm_limit | number }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Responses that are not streamed tell you where a key stands:</p>
+      {% call code('ex-headers', 'http', 'response headers') %}x-ratelimit-api_key-limit-requests: {{ key_rpm_limit }}
+x-ratelimit-api_key-remaining-requests: {{ key_rpm_limit - 1 }}
+x-ratelimit-api_key-limit-tokens: {{ key_tpm_limit }}
+x-ratelimit-api_key-remaining-tokens: {{ key_tpm_limit - 81 }}{% endcall %}
+      <p>Over a limit, the API answers <code>429</code> with a <code>retry-after</code> header (in seconds):</p>
+      {% call code('ex-429', 'json') %}{
+  "error": {
+    "message": "Rate limit exceeded for api_key: ... Limit type: requests. Current limit: {{ key_rpm_limit }}, Remaining: 0. ...",
+    "type": "throttling_error",
+    "code": "429"
+  }
+}{% endcall %}
+      <p>Wait and try again. The OpenAI SDKs do this for you; by hand it looks like this:</p>
+      {% call code('ex-retry', 'python') %}import time
+import openai
+
+def ask(client, messages, attempts=4):
+    for attempt in range(attempts):
+        try:
+            return client.chat.completions.create(model="{{ settings.model }}", messages=messages)
+        except openai.RateLimitError as error:
+            wait = float(error.response.headers.get("retry-after", 2 ** attempt))
+            time.sleep(wait)
+    raise RuntimeError("still rate limited"){% endcall %}
+    </section>
+
+    <section id="errors">
+      <h2>Errors</h2>
+      <p>Errors use the OpenAI shape: <code>{"error": {"message", "type", "code"}}</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col">Type</th><th scope="col">Meaning</th><th scope="col">What to do</th></tr></thead>
+          <tbody>
+            <tr><td><code>400</code></td><td><code>invalid_request_error</code></td><td>The body is malformed, for example <code>messages</code> is missing</td><td>Fix the request</td></tr>
+            <tr><td><code>401</code></td><td><code>token_not_found_in_db</code>, <code>auth_error</code></td><td>The key is missing, wrong or revoked</td><td>Check the key, or create a new one</td></tr>
+            <tr><td><code>403</code></td><td><code>key_model_access_denied</code></td><td>The model name is not one your key can use</td><td>Use <code>{{ settings.model }}</code></td></tr>
+            <tr><td><code>404</code></td><td><code>invalid_request_error</code></td><td>Unknown route</td><td>Use one of the two routes above</td></tr>
+            <tr><td><code>429</code></td><td><code>throttling_error</code></td><td>Rate limit reached</td><td>Wait for <code>retry-after</code> seconds</td></tr>
+            <tr><td><code>404</code>, <code>500</code>, or <code>429</code> with type <code>all_deployments_in_cooldown</code></td><td></td><td>The model is offline: the GPU is not running</td><td>Try again later. The status badge on this site shows whether the model is online</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="alert alert--info" role="note">
+        <svg class="icon alert__icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <p class="alert__title">Why is the model sometimes offline?</p>
+        <p class="alert__text">The GPU costs money while it runs, so it is started for sessions and shut down in between. Accounts, keys, usage and this site stay up the whole time.</p>
+      </aside>
+    </section>
+
+    <section id="usage">
+      <h2>Usage</h2>
+      <p>Every request is metered per key: prompt tokens, completion tokens and whether it succeeded. Your <a href="/usage">Usage</a> page shows the totals per day (in UTC) and per key, usually within 15 seconds of a request. Requests made in the playground are metered under a built-in key of their own.</p>
+    </section>
+
+    <section id="model">
+      <h2>The model</h2>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><th scope="row">Name</th><td><code>{{ settings.model }}</code></td></tr>
+            <tr><th scope="row">Weights</th><td>Open weights from OpenAI, Apache-2.0 licence</td></tr>
+            <tr><th scope="row">Context window</th><td>32,768 tokens, shared by the prompt and the reply</td></tr>
+            <tr><th scope="row">Served by</th><td>vLLM on an on-demand GPU pod, behind a LiteLLM gateway</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </article>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ static_url('vendor/highlight.min.js') }}" defer></script>
+<script src="{{ static_url('js/docs.js') }}" defer></script>
+{% endblock %}

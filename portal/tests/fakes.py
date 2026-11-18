@@ -396,7 +396,8 @@ class FakeGateway:
             raise GatewayError(
                 401,
                 "auth_error",
-                "Authentication Error, Key is blocked. Update via `/key/unblock` if you're an admin.",
+                "Authentication Error, Key is blocked. "
+                "Update via `/key/unblock` if you're an admin.",
             )
         return key
 
@@ -713,4 +714,3 @@ class FakeGateway:
             completion_tokens=usage["completion_tokens"],
             duration_ms=self.latency_ms,
         )
-

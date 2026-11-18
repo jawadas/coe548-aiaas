@@ -1,0 +1,41 @@
+{# The stacked prompt/completion bar chart. Needs "chart" (services.usage.Chart) and "chart_title_id". #}
+<figure class="chart{% if chart.dense %} chart--dense{% endif %}" data-chart>
+  <svg class="chart__svg" role="group" aria-labelledby="{{ chart_title_id }}">
+    <g class="chart__grid" aria-hidden="true">
+      {% for y, label in chart.ticks %}
+      <line{% if loop.last %} class="chart__baseline"{% endif %} x1="0" x2="100%" y1="{{ y }}%" y2="{{ y }}%"/>
+      {% endfor %}
+    </g>
+    <g aria-hidden="true">
+      {% for y, label in chart.ticks %}
+      <text class="chart__tick chart__tick--y" x="0" y="{{ y }}%" dx="-10" dy="0.32em">{{ label }}</text>
+      {% endfor %}
+    </g>
+    {% for bar in chart.bars %}
+    <g class="chart__bar{% if bar.is_today %} chart__bar--today{% endif %}" role="img" tabindex="{{ 0 if bar.is_today else -1 }}"
+       aria-label="{{ bar.day }}: {{ bar.prompt }} prompt, {{ bar.completion }} completion, {{ bar.total }} total"
+       data-day="{{ 'Today, ' if bar.is_today }}{{ bar.day }}" data-prompt="{{ bar.prompt }}" data-completion="{{ bar.completion }}" data-total="{{ bar.total }}">
+      <rect class="chart__hit" x="{{ bar.slot_x }}%" y="0" width="{{ bar.slot_width }}%" height="100%" rx="8"/>
+      <g class="chart__segs" data-stack>
+        <rect class="chart__seg chart__seg--completion" x="{{ bar.center }}%" y="{{ bar.completion_y }}%" width="4%" height="{{ bar.completion_height }}%"/>
+        <rect class="chart__seg chart__seg--prompt" x="{{ bar.center }}%" y="{{ bar.prompt_y }}%" width="4%" height="{{ bar.prompt_height }}%"/>
+      </g>
+      {% if bar.is_today and bar.has_data %}
+      <g class="chart__flag"><rect x="{{ bar.center }}%" y="{{ bar.completion_y }}%" width="46" height="20" fill="url(#accent-gradient)"/><text x="{{ bar.center }}%" y="{{ bar.completion_y }}%" dy="-12">{{ bar.total }}</text></g>
+      {% endif %}
+      {% if bar.show_label %}
+      <text class="chart__tick chart__tick--x" x="{{ bar.center }}%" y="100%" dy="19">{{ bar.label }}</text>
+      {% endif %}
+    </g>
+    {% endfor %}
+  </svg>
+  <table class="sr-only">
+    <caption>Tokens per day</caption>
+    <thead><tr><th scope="col">Day</th><th scope="col">Prompt tokens</th><th scope="col">Completion tokens</th><th scope="col">Total</th></tr></thead>
+    <tbody>
+      {% for bar in chart.bars %}
+      <tr><th scope="row">{{ bar.day }}</th><td>{{ bar.prompt }}</td><td>{{ bar.completion }}</td><td>{{ bar.total }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</figure>

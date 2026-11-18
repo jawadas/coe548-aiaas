@@ -214,7 +214,9 @@ def test_secrets_stay_out_of_repr() -> None:
 def test_load_settings_explains_what_is_wrong_without_echoing_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    set_env(monkeypatch, PORTAL_SECRET_KEY="changeme-changeme-changeme-changeme", LITELLM_MASTER_KEY="")
+    set_env(
+        monkeypatch, PORTAL_SECRET_KEY="changeme-changeme-changeme-changeme", LITELLM_MASTER_KEY=""
+    )
     monkeypatch.delenv("LITELLM_MASTER_KEY")
     with pytest.raises(ConfigError) as caught:
         load_settings()

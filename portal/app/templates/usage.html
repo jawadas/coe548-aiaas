@@ -1,0 +1,148 @@
+{% extends "app.html" %}
+{% block title %}Usage{% endblock %}
+{% block page_title %}Usage{% endblock %}
+{% block content %}
+<header class="page__header">
+  <div class="page__heading">
+    <h2 class="page__title">Usage</h2>
+    <p class="page__subtitle">{{ start | utc_date }} to {{ end | utc_date }}, in UTC. New requests show up within about 15 seconds.</p>
+  </div>
+  <div class="page__actions">
+    <nav class="segmented" aria-label="Period">
+      {% for option in ranges %}
+      <a class="segmented__label{% if option == range %} is-active{% endif %}" href="/usage?range={{ option }}"{% if option == range %} aria-current="true"{% endif %}>{{ option }} days</a>
+      {% endfor %}
+    </nav>
+    <a class="btn btn--secondary" href="/usage/export.csv?range={{ range }}"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>Export CSV</a>
+  </div>
+</header>
+
+{% if gateway_down %}{% include "_gateway_down.html" %}{% endif %}
+
+<section class="stat-grid" aria-label="Totals for the period">
+  <article class="stat">
+    <div class="stat__head"><h3 class="stat__label">Requests</h3><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-activity"/></svg></span></div>
+    <p class="stat__value">{{ totals.requests | number }}</p>
+    <p class="stat__meta">{% if totals.success_rate is not none %}{{ '%.1f' | format(totals.success_rate) }}% succeeded{% else %}none in this period{% endif %}</p>
+  </article>
+  <article class="stat">
+    <div class="stat__head"><h3 class="stat__label">Tokens in</h3><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-arrow-right"/></svg></span></div>
+    <p class="stat__value">{{ totals.prompt_tokens | compact }}</p>
+    <p class="stat__meta"><span class="stat__key"><span class="swatch swatch--prompt" aria-hidden="true"></span>prompt tokens</span></p>
+  </article>
+  <article class="stat">
+    <div class="stat__head"><h3 class="stat__label">Tokens out</h3><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-layers"/></svg></span></div>
+    <p class="stat__value">{{ totals.completion_tokens | compact }}</p>
+    <p class="stat__meta"><span class="stat__key"><span class="swatch swatch--completion" aria-hidden="true"></span>completion tokens</span></p>
+  </article>
+  <article class="stat">
+    <div class="stat__head"><h3 class="stat__label">Average latency</h3><span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-clock"/></svg></span></div>
+    <p class="stat__value">{% if totals.avg_latency_ms %}{{ '%.1f' | format(totals.avg_latency_ms / 1000) }} <span class="stat__unit">s</span>{% else %}<span class="stat__unit">no data</span>{% endif %}</p>
+    <p class="stat__meta">per successful request</p>
+  </article>
+</section>
+
+{% if chart and totals.requests %}
+<section class="card" aria-labelledby="chart-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="chart-title">Tokens per day</h2>
+      <p class="card__subtitle">{{ totals.total_tokens | compact }} tokens over {{ range }} days</p>
+    </div>
+    <ul class="legend" aria-label="Series">
+      <li class="legend__item"><span class="swatch swatch--prompt" aria-hidden="true"></span>Prompt <span class="legend__value">{{ totals.prompt_tokens | compact }}</span></li>
+      <li class="legend__item"><span class="swatch swatch--completion" aria-hidden="true"></span>Completion <span class="legend__value">{{ totals.completion_tokens | compact }}</span></li>
+    </ul>
+  </header>
+  <div class="card__body">
+    {% set chart_title_id = 'chart-title' %}
+    {% include "_chart.html" %}
+  </div>
+</section>
+
+<section class="card" aria-labelledby="by-key-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="by-key-title">By key</h2>
+      <p class="card__subtitle">The playground has its own built-in key.</p>
+    </div>
+  </header>
+  <div class="table-wrap" tabindex="0" role="region" aria-labelledby="by-key-title">
+    <table class="table">
+      <thead><tr><th scope="col">Key</th><th scope="col" class="table__num">Requests</th><th scope="col" class="table__num">Tokens in</th><th scope="col" class="table__num">Tokens out</th><th scope="col" class="table__num">Share</th></tr></thead>
+      <tbody>
+        {% for row in by_key %}
+        <tr>
+          <td class="table__name" dir="auto">{{ row.name }}</td>
+          <td class="table__num">{{ row.requests | number }}</td>
+          <td class="table__num">{{ row.prompt_tokens | number }}</td>
+          <td class="table__num">{{ row.completion_tokens | number }}</td>
+          <td class="table__num"><meter class="share" min="0" max="100" value="{{ '%.1f' | format(row.share) }}">{{ '%.0f' | format(row.share) }}%</meter> {{ '%.0f' | format(row.share) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="recent-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="recent-title">Recent requests</h2>
+      <p class="card__subtitle">The latest {{ recent | length }}, newest first.</p>
+    </div>
+  </header>
+  <div class="table-wrap" tabindex="0" role="region" aria-labelledby="recent-title">
+    <table class="table">
+      <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Key</th><th scope="col">Result</th><th scope="col" class="table__num">Tokens in</th><th scope="col" class="table__num">Tokens out</th><th scope="col" class="table__num">Duration</th></tr></thead>
+      <tbody>
+        {% for entry, key_name in recent %}
+        <tr>
+          <td>{{ entry.started_at | utc_datetime }}</td>
+          <td dir="auto">{{ key_name }}</td>
+          <td>
+            {% if entry.status == 'success' %}<span class="badge badge--success"><span class="badge__dot" aria-hidden="true"></span>OK</span>
+            {% elif entry.error_code == '429' %}<span class="badge badge--warning"><span class="badge__dot" aria-hidden="true"></span>Rate limited</span>
+            {% else %}<span class="badge badge--danger"><span class="badge__dot" aria-hidden="true"></span>Failed</span>{% endif %}
+          </td>
+          <td class="table__num">{{ entry.prompt_tokens | number }}</td>
+          <td class="table__num">{{ entry.completion_tokens | number }}</td>
+          <td class="table__num">{% if entry.duration_ms is not none %}{{ '%.1f' | format(entry.duration_ms / 1000) }} s{% else %}–{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% elif not gateway_down %}
+<section class="card">
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg class="icon icon--lg"><use href="#i-usage"/></svg></span>
+    <h3 class="empty__title">No usage in this period</h3>
+    <p class="empty__text">Send a request with one of your keys, or say hello in the playground, and it will show up here.</p>
+    <div class="empty__actions">
+      <a class="btn btn--primary" href="/keys"><svg class="icon" aria-hidden="true"><use href="#i-key"/></svg>API keys</a>
+      <a class="btn btn--ghost" href="/chat">Open playground</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="limits-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="limits-title">Your limits</h2>
+      <p class="card__subtitle">Over a limit, the API answers <code>429</code> with a <code>Retry-After</code> header.</p>
+    </div>
+  </header>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th scope="col">Applies to</th><th scope="col" class="table__num">Requests per minute</th><th scope="col" class="table__num">Tokens per minute</th></tr></thead>
+      <tbody>
+        <tr><td class="table__name">Each API key</td><td class="table__num">{{ key_rpm_limit | number }}</td><td class="table__num">{{ key_tpm_limit | number }}</td></tr>
+        <tr><td class="table__name">Your account, all keys together</td><td class="table__num">{{ user_limits.rpm_limit | number }}</td><td class="table__num">{{ user_limits.tpm_limit | number }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

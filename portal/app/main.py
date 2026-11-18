@@ -43,13 +43,13 @@ from app.config import Settings, get_settings
 from app.deps import LoginRequired, PortalError, csrf_protect
 from app.gateway import GatewayClient, GatewayError, GatewayNotFound, GatewayUnavailable
 from app.ratelimit import AuthRateLimits
-from app.routes import account, admin, auth, chat, docs, keys, overview, public, usage
+from app.routes import auth, chat, docs, keys, overview, public, usage
 from app.status import ModelStatusService
 from app.templating import STATIC_DIR, STATIC_URL, error_response, is_api_request, redirect
 
 logger = logging.getLogger(__name__)
 
-ROUTE_MODULES = (public, auth, overview, keys, usage, chat, docs, account, admin)
+ROUTE_MODULES = (public, auth, overview, keys, usage, chat, docs)
 
 SECURITY_HEADERS = {
     "Content-Security-Policy": (

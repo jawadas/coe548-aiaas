@@ -1,0 +1,164 @@
+{% extends "app.html" %}
+{% block title %}Overview{% endblock %}
+{% block page_title %}Overview{% endblock %}
+{% block content %}
+<header class="page__header">
+  <div class="page__heading">
+    <h2 class="page__title" dir="auto">Welcome, {{ user.first_name }}</h2>
+    <p class="page__subtitle">
+      {% if is_new %}Create a key, send a request, and watch your usage appear here.
+      {% else %}Your keys have sent {{ (today.requests if today else 0) | number }} request{{ '' if today and today.requests == 1 else 's' }} today.{% endif %}
+    </p>
+  </div>
+  <div class="page__actions">
+    <a class="btn btn--secondary" href="/chat"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>Open playground</a>
+  </div>
+</header>
+
+{% if gateway_down %}{% include "_gateway_down.html" %}{% endif %}
+
+<section class="stat-grid" aria-label="Today at a glance">
+  <article class="stat">
+    <div class="stat__head">
+      <h3 class="stat__label">Requests today</h3>
+      <span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-activity"/></svg></span>
+    </div>
+    <p class="stat__value">{{ (today.requests if today else 0) | number }}</p>
+    <p class="stat__meta">
+      {% if change is not none %}
+      <span class="delta delta--{{ 'up' if change >= 0 else 'down' }}"><svg class="icon icon--xs" aria-hidden="true"><use href="#i-trending-up"/></svg>{{ change | abs }}%</span> {{ 'more' if change >= 0 else 'fewer' }} than yesterday
+      {% else %}no requests yesterday{% endif %}
+    </p>
+  </article>
+  <article class="stat">
+    <div class="stat__head">
+      <h3 class="stat__label">Tokens today</h3>
+      <span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-layers"/></svg></span>
+    </div>
+    <p class="stat__value">{{ (today.total_tokens if today else 0) | compact }}</p>
+    <p class="stat__meta">
+      <span class="stat__key"><span class="swatch swatch--prompt" aria-hidden="true"></span>{{ (today.prompt_tokens if today else 0) | compact }} in</span>
+      <span class="stat__key"><span class="swatch swatch--completion" aria-hidden="true"></span>{{ (today.completion_tokens if today else 0) | compact }} out</span>
+    </p>
+  </article>
+  <article class="stat">
+    <div class="stat__head">
+      <h3 class="stat__label">Active keys</h3>
+      <span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-key"/></svg></span>
+    </div>
+    <p class="stat__value">{{ active_keys }} <span class="stat__unit">of {{ max_keys }}</span></p>
+    <p class="stat__meta">
+      <span class="pips" role="img" aria-label="{{ key_count }} of {{ max_keys }} key slots in use">{% for slot in range(max_keys) %}<span class="pips__pip{% if slot < key_count %} is-on{% endif %}"></span>{% endfor %}</span>
+      {{ max_keys - key_count }} slot{{ '' if max_keys - key_count == 1 else 's' }} free
+    </p>
+  </article>
+  <article class="stat">
+    <div class="stat__head">
+      <h3 class="stat__label">Rate limit</h3>
+      <span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-gauge"/></svg></span>
+    </div>
+    <p class="stat__value">{{ key_rpm_limit }} <span class="stat__unit">req/min</span></p>
+    <p class="stat__meta">per key, resets every minute</p>
+  </article>
+</section>
+
+{% if is_new and not gateway_down %}
+<section class="card" aria-labelledby="start-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="start-title">Get started in three steps</h2>
+      <p class="card__subtitle">It takes about a minute.</p>
+    </div>
+  </header>
+  <div class="card__body steps">
+    <a class="tile" href="/keys"><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-key"/></svg></span><span class="tile__body"><span class="tile__title">1. Create an API key</span><span class="tile__text">It is shown once, so copy it</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+    <a class="tile" href="#quickstart"><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-terminal"/></svg></span><span class="tile__body"><span class="tile__title">2. Send a request</span><span class="tile__text">curl or any OpenAI SDK</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+    <a class="tile" href="/usage"><span class="tile__icon" aria-hidden="true"><svg class="icon"><use href="#i-usage"/></svg></span><span class="tile__body"><span class="tile__title">3. Watch your usage</span><span class="tile__text">Requests and tokens per key</span></span><svg class="icon icon--sm tile__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+  </div>
+</section>
+{% elif chart %}
+<section class="card" aria-labelledby="usage-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="usage-title">Token usage <span class="card__title-note">· last {{ chart_days }} days</span></h2>
+      <p class="card__subtitle">{{ totals.total_tokens | compact }} tokens in total, about {{ (totals.total_tokens / chart_days) | compact }} a day</p>
+    </div>
+    <ul class="legend" aria-label="Series">
+      <li class="legend__item"><span class="swatch swatch--prompt" aria-hidden="true"></span>Prompt <span class="legend__value">{{ totals.prompt_tokens | compact }}</span></li>
+      <li class="legend__item"><span class="swatch swatch--completion" aria-hidden="true"></span>Completion <span class="legend__value">{{ totals.completion_tokens | compact }}</span></li>
+    </ul>
+  </header>
+  <div class="card__body">
+    {% set chart_title_id = 'usage-title' %}
+    {% include "_chart.html" %}
+  </div>
+  <footer class="card__footer">
+    <span>Days are in UTC. New requests show up within about 15 seconds.</span>
+    <a class="link" href="/usage">Open usage <svg class="icon icon--sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+  </footer>
+</section>
+{% endif %}
+
+<section class="card" id="quickstart" aria-labelledby="quickstart-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="quickstart-title">Quickstart</h2>
+      <p class="card__subtitle">OpenAI-compatible. Point any client at the base URL and send your key as a bearer token.</p>
+    </div>
+    <div class="tabs__list" role="tablist" aria-label="Quickstart language">
+      <button class="tabs__tab" type="button" role="tab" id="qs-tab-curl" aria-controls="qs-panel-curl" aria-selected="true">curl</button>
+      <button class="tabs__tab" type="button" role="tab" id="qs-tab-python" aria-controls="qs-panel-python" aria-selected="false" tabindex="-1">Python</button>
+    </div>
+  </header>
+  <div class="card__body">
+    <div class="quickstart__endpoints">
+      <div class="copy-field">
+        <span class="copy-field__label">Base URL</span>
+        <code class="copy-field__value" id="qs-base-url">{{ base_url }}</code>
+        <button class="btn btn--ghost btn--icon btn--sm" type="button" data-copy="#qs-base-url" aria-label="Copy base URL"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      <div class="copy-field">
+        <span class="copy-field__label">Model</span>
+        <code class="copy-field__value" id="qs-model">{{ settings.model }}</code>
+        <button class="btn btn--ghost btn--icon btn--sm" type="button" data-copy="#qs-model" aria-label="Copy model name"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+    </div>
+    {% include "_quickstart.html" %}
+  </div>
+  <footer class="card__footer">
+    <span>Replace <code>sk-YOUR-KEY</code> with a key from the API keys page.</span>
+    <a class="link" href="/docs">Full API docs <svg class="icon icon--sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+  </footer>
+</section>
+
+{% if keys %}
+<section class="card" aria-labelledby="keys-title">
+  <header class="card__header">
+    <div class="card__heading">
+      <h2 class="card__title" id="keys-title">API keys</h2>
+      <p class="card__subtitle">{{ key_count }} key{{ '' if key_count == 1 else 's' }} on this account</p>
+    </div>
+    <a class="btn btn--primary" href="/keys"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Create key</a>
+  </header>
+  <div class="table-wrap" tabindex="0" role="region" aria-labelledby="keys-title">
+    <table class="table">
+      <thead><tr><th scope="col">Name</th><th scope="col">Key</th><th scope="col">Created</th><th scope="col">Last used</th></tr></thead>
+      <tbody>
+        {% for key in keys %}
+        <tr>
+          <td class="table__name" dir="auto">{{ key.name }}</td>
+          <td><code class="key">{{ key.masked }}</code></td>
+          <td>{{ key.created_at | utc_date }}</td>
+          <td>{{ key.last_active | relative_time if key.last_active else 'Never' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <footer class="card__footer">
+    <span>A key is shown once, when it is created.</span>
+    <a class="link" href="/keys">Manage all keys <svg class="icon icon--sm" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+  </footer>
+</section>
+{% endif %}
+{% endblock %}

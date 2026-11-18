@@ -1,0 +1,33 @@
+{# The signed-out frame: a top bar, the page, a footer. Used by the landing, sign-in, sign-up, docs and error pages. #}
+{% extends "base.html" %}
+{% block body %}
+<div class="site">
+  <header class="site__bar topbar">
+    <a class="brand" href="/" aria-label="AIaaS home">
+      <svg class="brand__mark" aria-hidden="true"><use href="#logo"/></svg>
+      <span class="brand__name">AI<span>aaS</span></span>
+    </a>
+    <nav class="site__nav" aria-label="Site">
+      <a class="btn btn--ghost" href="/docs"{% if nav_active == 'docs' %} aria-current="page"{% endif %}>Docs</a>
+      {% if user %}
+      <a class="btn btn--primary" href="/overview">Open console</a>
+      {% else %}
+      <a class="btn btn--ghost" href="/login">Sign in</a>
+      {% if settings.signup_open %}<a class="btn btn--primary site__cta" href="/signup">Get started</a>{% endif %}
+      {% endif %}
+      <button class="btn btn--ghost btn--icon theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme">
+        <svg class="icon theme-toggle__sun" aria-hidden="true"><use href="#i-sun"/></svg>
+        <svg class="icon theme-toggle__moon" aria-hidden="true"><use href="#i-moon"/></svg>
+      </button>
+    </nav>
+  </header>
+  <main class="site__main{% block main_class %}{% endblock %}" id="main">
+    {% include "_flash.html" %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site__footer">
+    <span>COE 548 Cloud-Based Systems · Team 5</span>
+    <span class="site__footer-links"><a class="link" href="/docs">API docs</a><a class="link" href="https://github.com/jawadas/coe548-aiaas" rel="noopener">GitHub</a></span>
+  </footer>
+</div>
+{% endblock %}
